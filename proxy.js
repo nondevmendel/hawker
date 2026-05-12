@@ -1,12 +1,14 @@
-import { withAuth } from 'next-auth/middleware'
 import { NextResponse } from 'next/server'
+import { getToken } from 'next-auth/jwt'
 
-const authProxy = withAuth({
-  pages: { signIn: '/api/auth/signin' },
-})
-
-export function proxy(req) {
-  return authProxy(req)
+export async function proxy(req) {
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
+  if (!token) {
+    const signIn = new URL('/api/auth/signin', req.url)
+    signIn.searchParams.set('callbackUrl', req.nextUrl.pathname)
+    return NextResponse.redirect(signIn)
+  }
+  return NextResponse.next()
 }
 
 export const config = {
