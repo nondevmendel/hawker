@@ -1,7 +1,6 @@
 import NextAuth from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
-
-const ALLOWED_EMAIL = 'mmr305@gmail.com'
+import { getOrCreateUser, getUserApiKey } from '../../../lib/storage'
 
 export const authOptions = {
   providers: [
@@ -12,7 +11,28 @@ export const authOptions = {
   ],
   callbacks: {
     async signIn({ profile }) {
-      return profile?.email === ALLOWED_EMAIL
+      // Any Google account can sign in
+      return !!profile?.email
+    },
+    async jwt({ token, profile }) {
+      if (profile) {
+        // First sign-in: provision user
+        const uid = await getOrCreateUser({
+          sub:     token.sub,
+          email:   profile.email,
+          name:    profile.name,
+          picture: profile.picture,
+        })
+        token.uid = uid
+      }
+      return token
+    },
+    async session({ session, token }) {
+      if (token.uid) {
+        session.user.uid = token.uid
+        session.user.apiKey = await getUserApiKey(token.uid)
+      }
+      return session
     },
   },
   secret: process.env.NEXTAUTH_SECRET,

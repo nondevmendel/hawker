@@ -98,8 +98,8 @@ export async function getServerSideProps({ req, res }) {
 
   return {
     props: {
-      apiKey: process.env.HAWKER_API_KEY || '',
-      apiUrl: process.env.NEXTAUTH_URL || 'https://hawker.vercel.app',
+      apiKey: session.user?.apiKey || '',
+      apiUrl: process.env.NEXTAUTH_URL || 'https://hawker-flax.vercel.app',
     },
   }
 }

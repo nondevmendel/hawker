@@ -250,7 +250,7 @@
   </div>
   <div class="header-right">
     <div class="view-toggle">
-      <button class="vt-btn active" id="btn-log" onclick="setView('log')">My Log</button>
+      <button class="vt-btn active" id="btn-log" onclick="viewMyLog()"><span id="viewing-name">My Log</span></button>
       <button class="vt-btn" id="btn-following" onclick="setView('following')">Following</button>
     </div>
     <a href="/install" style="font-size:11px;color:var(--muted);text-decoration:none;border:1px solid var(--border);padding:5px 12px;border-radius:6px;transition:.12s" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">⬇ Get the App</a>
@@ -303,37 +303,10 @@
 
 <div id="following-main" class="following-main">
   <div class="following-header">
-    <h2>Following</h2>
-    <div class="follow-add-row">
-      <input type="text" placeholder="Username to follow…" disabled>
-      <button class="btn-add" style="opacity:.4;cursor:not-allowed" disabled>Follow</button>
-    </div>
+    <h2>People</h2>
   </div>
-  <div class="leaderboard" id="following-list">
-    <div class="lb-row" style="opacity:.35">
-      <div class="lb-rank">1</div>
-      <div class="lb-avatar">👤</div>
-      <div class="lb-info"><div class="lb-name">username</div><div class="lb-sub">last seen today</div></div>
-      <div class="lb-stats">
-        <div class="lb-stat"><span class="val">—</span><span class="lbl">shots today</span></div>
-        <div class="lb-stat"><span class="val">—</span><span class="lbl">this week</span></div>
-        <div class="lb-stat"><span class="val">—</span><span class="lbl">top site</span></div>
-      </div>
-    </div>
-    <div class="lb-row" style="opacity:.2">
-      <div class="lb-rank">2</div>
-      <div class="lb-avatar">👤</div>
-      <div class="lb-info"><div class="lb-name">username</div><div class="lb-sub">last seen yesterday</div></div>
-      <div class="lb-stats">
-        <div class="lb-stat"><span class="val">—</span><span class="lbl">shots today</span></div>
-        <div class="lb-stat"><span class="val">—</span><span class="lbl">this week</span></div>
-        <div class="lb-stat"><span class="val">—</span><span class="lbl">top site</span></div>
-      </div>
-    </div>
-  </div>
-  <div class="coming-soon-banner">
-    <h3>Coming soon</h3>
-    <p>Follow other Hawker users to see their social media stats here,<br>ranked by time spent or screenshots this week.</p>
+  <div id="people-list" style="display:flex;flex-direction:column;gap:8px">
+    <p style="color:var(--muted);font-size:13px">Loading…</p>
   </div>
 </div>
 
@@ -351,7 +324,7 @@
 const REFRESH_MS = 5 * 60 * 1000;
 let allEntries = [], viewEntries = [], lbIdx = 0, nextRefresh = Date.now() + REFRESH_MS;
 let currentMode = 'hour', currentGroups = [], activeIdx = -1, selectedDate = null;
-let cachedVisits = {}, cachedConfig = {};
+let cachedVisits = {}, cachedConfig = {}, cachedProfile = null, viewingUid = null, myUid = null;
 
 function fmtTime(s) {
   if (!s) return '';
@@ -364,16 +337,25 @@ function weekKey() {
   return `${yr}-W${String(wk).padStart(2,'0')}`;
 }
 
-async function load() {
+async function load(uid) {
   try {
-    const r = await fetch(`/api/data?t=${Date.now()}`);
+    const url = uid ? `/api/data?uid=${encodeURIComponent(uid)}&t=${Date.now()}` : `/api/data?t=${Date.now()}`;
+    const r = await fetch(url);
+    if (r.status === 401) { window.location = '/api/auth/signin'; return; }
     const data = await r.json();
-    allEntries = data.entries || [];
+    allEntries   = data.entries || [];
     cachedVisits = data.visits || {};
     cachedConfig = data.config || {};
+    cachedProfile = data.profile || null;
+    viewingUid   = data.uid || null;
+    if (!myUid) myUid = data.isOwner ? data.uid : null;
     renderBrowser();
     renderStats(cachedVisits);
-    renderIgnored((cachedConfig.ignored_urls || []));
+    renderIgnored(cachedConfig.ignored_urls || []);
+    if (cachedProfile) {
+      const nameEl = document.getElementById('viewing-name');
+      if (nameEl) nameEl.textContent = data.isOwner ? 'My Log' : (cachedProfile.name || cachedProfile.username || 'User\'s Log');
+    }
   } catch(e) {
     document.getElementById('gallery').innerHTML = '<p style="color:var(--muted);padding:40px 0">Failed to load — retrying…</p>';
   }
@@ -570,6 +552,66 @@ function setView(view) {
   ['log', 'following'].forEach(v => {
     document.getElementById('btn-' + v).classList.toggle('active', v === view);
   });
+  if (view === 'following') loadPeople();
+}
+
+async function loadPeople() {
+  const el = document.getElementById('people-list');
+  el.innerHTML = '<p style="color:var(--muted);font-size:13px">Loading…</p>';
+  try {
+    const data = await api('/api/users');
+    const users = data.users || [];
+    if (!users.length) { el.innerHTML = '<p style="color:var(--muted);font-size:13px">No other users yet.</p>'; return; }
+    el.innerHTML = users.map(u => `
+      <div class="lb-row" style="cursor:pointer">
+        <div class="lb-avatar" onclick="viewUserLog('${u.uid}')" style="cursor:pointer">
+          ${u.picture ? `<img src="${u.picture}" style="width:38px;height:38px;border-radius:50%;object-fit:cover">` : '👤'}
+        </div>
+        <div class="lb-info" onclick="viewUserLog('${u.uid}')" style="flex:1">
+          <div class="lb-name">${u.name || u.username || 'User'} ${u.isMe ? '<span style="font-size:10px;color:var(--muted)">(you)</span>' : ''}</div>
+          <div class="lb-sub">${u.shotCount} screenshot${u.shotCount!==1?'s':''} total${u.lastShotAt ? ' · last ' + timeAgo(u.lastShotAt) : ''}</div>
+        </div>
+        ${!u.isMe ? `<button onclick="toggleFollow('${u.uid}',this)" class="btn-add" style="padding:6px 14px;font-size:12px;${u.following?'background:#333;color:#aaa':''}">
+          ${u.following ? 'Unfollow' : 'Follow'}
+        </button>` : ''}
+      </div>
+    `).join('');
+  } catch(e) { el.innerHTML = '<p style="color:#e05555;font-size:13px">Failed to load users.</p>'; }
+}
+
+async function toggleFollow(uid, btn) {
+  const following = btn.textContent.trim() === 'Unfollow';
+  btn.disabled = true;
+  try {
+    await api('/api/follow', 'POST', { uid, action: following ? 'unfollow' : 'follow' });
+    btn.textContent = following ? 'Follow' : 'Unfollow';
+    btn.style.background = following ? '' : '#333';
+    btn.style.color = following ? '' : '#aaa';
+  } catch(e) { alert('Failed: ' + e.message); }
+  btn.disabled = false;
+}
+
+function viewUserLog(uid) {
+  document.getElementById('viewing-name').textContent = 'Loading…';
+  setView('log');
+  allEntries = []; viewEntries = []; activeIdx = -1; selectedDate = null;
+  renderBrowser();
+  load(uid);
+}
+
+function viewMyLog() {
+  document.getElementById('viewing-name').textContent = 'My Log';
+  allEntries = []; viewEntries = []; activeIdx = -1; selectedDate = null;
+  renderBrowser();
+  load();
+}
+
+function timeAgo(iso) {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff/60000), h = Math.floor(m/60), d = Math.floor(h/24);
+  if (d > 0) return `${d}d ago`;
+  if (h > 0) return `${h}h ago`;
+  return `${m}m ago`;
 }
 
 function setLogTab(tab) {
@@ -588,11 +630,8 @@ function adminStatus(msg, type) {
   el.className = 'admin-status ' + (type || '');
 }
 
-const HAWKER_API_KEY = '';  // leave blank — delete uses same-origin cookie auth in future
-
 async function api(path, method = 'GET', body = null) {
   const opts = { method, headers: { 'Content-Type': 'application/json' } };
-  if (HAWKER_API_KEY) opts.headers['x-api-key'] = HAWKER_API_KEY;
   if (body) opts.body = JSON.stringify(body);
   const r = await fetch(path, opts);
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -698,7 +737,7 @@ function gateCheck() {
   }
 }
 
-load();
+load();  // my own log on initial load
 
 const HAWK_FRAMES = [
 `  \\  _,_  /
