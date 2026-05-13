@@ -51,12 +51,19 @@
   .award-card {
     background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px 18px;
   }
+  .award-ascii-wrap { height:90px; display:flex; align-items:center; justify-content:center; margin-bottom:12px; }
   .award-ascii {
     font-family:Menlo,Monaco,monospace; font-size:9.5px; line-height:1.35; color:var(--accent);
-    white-space:pre; text-align:center; margin-bottom:12px; opacity:.9; display:block;
+    white-space:pre; text-align:center; opacity:.9; margin:0;
   }
   .award-title { font-size:15px; font-weight:700; margin-bottom:3px; }
   .award-sub { font-size:11px; color:var(--muted); margin-bottom:16px; }
+
+  .user-tabs { display:flex; border:1px solid var(--border); border-radius:8px; overflow:hidden; width:fit-content; margin:20px 0 14px; }
+  .utab { background:none; border:none; border-right:1px solid var(--border); color:var(--muted); padding:6px 16px; cursor:pointer; font-size:12px; font-weight:500; transition:.12s; white-space:nowrap; }
+  .utab:last-child { border-right:none; }
+  .utab.active { background:var(--accent); color:#fff; }
+  .utab:hover:not(.active) { color:var(--text); background:rgba(74,158,255,.09); }
   .award-entries { display:flex; flex-direction:column; gap:8px; }
   .award-entry { display:flex; align-items:center; gap:10px; padding:9px 12px; background:var(--bg); border:1px solid var(--border); border-radius:8px; }
   .award-medal { font-size:16px; width:22px; text-align:center; flex-shrink:0; }
@@ -78,6 +85,7 @@
   .user-picker-bar select:focus { border-color:var(--accent); }
 
   .layout { display:grid; grid-template-columns:1fr 220px; gap:24px; align-items:start; }
+  .layout > *:first-child { min-width:0; }
   @media(max-width:860px) { .layout{grid-template-columns:1fr} .sidebar{display:none} }
 
   .toggle-bar { display:inline-flex; border:1px solid var(--border); border-radius:8px; overflow:hidden; margin-bottom:14px; }
@@ -249,35 +257,35 @@
   </div>
   <div class="awards-grid">
     <div class="award-card">
-      <pre class="award-ascii">    _
+      <div class="award-ascii-wrap"><pre class="award-ascii">    _
   _(o)_
    )|(
   _&gt;*&lt;_
  /~~~~~\
 /~~~~~~~\
     |
-   / \</pre>
+   / \</pre></div>
       <div class="award-title">The Biggest Wimp</div>
       <div class="award-sub">Most screenshots deleted</div>
       <div id="lb-wimp" class="award-entries"></div>
     </div>
     <div class="award-card">
-      <pre class="award-ascii">  o  .---.
+      <div class="award-ascii-wrap"><pre class="award-ascii">  o  .---.
  \|--[###]
   |  [###]
  / \ '---'
-      o o</pre>
+      o o</pre></div>
       <div class="award-title">The Tweaker</div>
       <div class="award-sub">Most site visits</div>
       <div id="lb-tweaker" class="award-entries"></div>
     </div>
     <div class="award-card">
-      <pre class="award-ascii">   ___
+      <div class="award-ascii-wrap"><pre class="award-ascii">   ___
   /o_o\
  /((((\)
 (((((((()
  \(((((/
-   | |</pre>
+   | |</pre></div>
       <div class="award-title">The Sloucher</div>
       <div class="award-sub">Most time on social media</div>
       <div id="lb-sloucher" class="award-entries"></div>
@@ -287,11 +295,8 @@
 
 <!-- ── Log ── -->
 <main id="log-main">
-  <div class="user-picker-bar">
-    <label for="user-pick">Viewing:</label>
-    <select id="user-pick" onchange="onPickUser(this.value)">
-      <option value="">My Log</option>
-    </select>
+  <div id="user-tabs" class="user-tabs">
+    <button class="utab active" data-uid="" onclick="pickUserTab('',this)">My Log</button>
   </div>
 
   <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);padding:20px 0 12px">Screenshots</div>
@@ -411,11 +416,24 @@ function renderLeaderboard() {
 async function loadUserPicker() {
   try {
     const data = await api('/api/users');
-    const sel = document.getElementById('user-pick');
+    const tabs = document.getElementById('user-tabs');
     const followed = (data.users || []).filter(u => u.following && !u.isMe);
-    sel.innerHTML = '<option value="">My Log</option>' +
-      followed.map(u => `<option value="${u.uid}">${u.name || u.username || 'User'}</option>`).join('');
+    tabs.querySelectorAll('.utab:not([data-uid=""])').forEach(t => t.remove());
+    followed.forEach(u => {
+      const btn = document.createElement('button');
+      btn.className = 'utab';
+      btn.dataset.uid = u.uid;
+      btn.textContent = u.name || u.username || 'User';
+      btn.onclick = () => pickUserTab(u.uid, btn);
+      tabs.appendChild(btn);
+    });
   } catch(_) {}
+}
+
+function pickUserTab(uid, btn) {
+  document.querySelectorAll('#user-tabs .utab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  onPickUser(uid);
 }
 
 function onPickUser(uid) {
