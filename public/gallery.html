@@ -86,7 +86,7 @@
   .tgl-btn.active { background:var(--accent); color:#fff; }
   .tgl-btn:hover:not(.active) { background:rgba(74,158,255,.09); color:var(--text); }
 
-  .browser-body { display:grid; grid-template-columns:200px 1fr; border:1px solid var(--border); border-radius:10px; overflow:hidden; min-height:400px; }
+  .browser-body { display:grid; grid-template-columns:150px 1fr; border:1px solid var(--border); border-radius:10px; overflow:hidden; min-height:400px; }
   .group-col { display:flex; flex-direction:column; border-right:1px solid var(--border); max-height:62vh; }
   .group-header { padding:8px 10px; border-bottom:1px solid var(--border); display:flex; flex-direction:column; gap:7px; flex-shrink:0; }
   .group-header .date-select { width:100%; font-size:12px; padding:6px 8px; max-width:none; }
@@ -233,6 +233,7 @@
     <span id="dot"></span>
     <span id="refresh-info">Loading…</span>
     <button class="hdr-btn" onclick="openPeople()">👥 People</button>
+    <button class="hdr-btn" id="ltab-ignore-btn" onclick="openIgnore()">🫣 Hidden Sites</button>
     <a href="/install" class="hdr-btn">⬇ Get the App</a>
   </div>
 </header>
@@ -296,7 +297,6 @@
   <div class="log-subnav">
     <button class="log-tab active" id="ltab-shots" onclick="setLogTab('shots')">Screenshots</button>
     <button class="log-tab" id="ltab-stats" onclick="setLogTab('stats')">Visit Stats</button>
-    <button class="log-tab" id="ltab-ignore-btn" onclick="openIgnore()" style="margin-left:auto">⚙ Ignore List</button>
   </div>
   <div id="admin-status" class="admin-status"></div>
 
@@ -434,6 +434,9 @@ function onPickUser(uid) {
 function updateOwnerUI(isOwner) {
   const btn = document.getElementById('ltab-ignore-btn');
   if (btn) btn.style.display = isOwner ? '' : 'none';
+  // Visit Stats tab also only relevant for your own log
+  const statsTab = document.getElementById('ltab-stats');
+  if (statsTab) statsTab.style.display = isOwner ? '' : 'none';
 }
 
 // ── People modal ─────────────────────────────────────────────────────────────
@@ -575,7 +578,7 @@ function shotThumb(e, i) {
   const canDelete = isOwner;
   return `<div class="shot-wrap">
     <img class="shot-thumb" src="${e.url}" loading="lazy" onclick="openLb(${i})" alt="" title="${e.display}">
-    ${canDelete ? `<button class="shot-del-overlay" onclick="galleryDelete('${e.stem}','${e.domain||''}',event)" title="Delete">✕</button>` : ''}
+    ${canDelete ? `<button class="shot-del-overlay" onclick="galleryDelete('${e.stem}','${e.domain||''}',event)" title="Hide">🫣</button>` : ''}
   </div>`;
 }
 
