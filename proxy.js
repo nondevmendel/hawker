@@ -12,5 +12,5 @@ export async function proxy(req) {
 }
 
 export const config = {
-  matcher: ['/app.html', '/api/data'],
+  matcher: [],
 }

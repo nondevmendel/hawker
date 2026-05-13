@@ -341,7 +341,7 @@ async function load(uid) {
   try {
     const url = uid ? `/api/data?uid=${encodeURIComponent(uid)}&t=${Date.now()}` : `/api/data?t=${Date.now()}`;
     const r = await fetch(url);
-    if (r.status === 401) { window.location = '/api/auth/signin'; return; }
+    if (r.status === 401 || r.redirected) { window.location = '/api/auth/signin?callbackUrl=' + encodeURIComponent('/app.html'); return; }
     const data = await r.json();
     allEntries   = data.entries || [];
     cachedVisits = data.visits || {};
