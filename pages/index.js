@@ -3,5 +3,5 @@ export default function Home() {
 }
 
 export async function getServerSideProps() {
-  return { redirect: { destination: '/app.html', permanent: false } }
+  return { redirect: { destination: '/gallery.html', permanent: false } }
 }

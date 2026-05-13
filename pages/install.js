@@ -10,7 +10,7 @@ export default function Install({ apiKey, apiUrl }) {
       fontFamily:'-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',
       padding:'40px 28px', maxWidth:'700px', margin:'0 auto',
     }}>
-      <a href="/app.html" style={{ color:'#4a9eff', fontSize:'12px', textDecoration:'none' }}>← Back to dashboard</a>
+      <a href="/gallery.html" style={{ color:'#4a9eff', fontSize:'12px', textDecoration:'none' }}>← Back to dashboard</a>
       <h1 style={{ marginTop:'20px', marginBottom:'6px', fontSize:'22px' }}>
         <span style={{ color:'#4a9eff' }}>Hawk</span>er — Install the Menu Bar App
       </h1>
