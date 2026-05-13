@@ -296,7 +296,6 @@
 
   <div class="log-subnav">
     <button class="log-tab active" id="ltab-shots" onclick="setLogTab('shots')">Screenshots</button>
-    <button class="log-tab" id="ltab-stats" onclick="setLogTab('stats')">Visit Stats</button>
   </div>
   <div id="admin-status" class="admin-status"></div>
 
@@ -321,10 +320,6 @@
   </div>
 
 
-<div id="lpanel-stats" class="log-panel">
-    <div class="section-title">Social Media Visits</div>
-    <div id="admin-stats-grid" class="stats-full-grid"></div>
-  </div>
 </main>
 
 <!-- ── People modal ── -->
@@ -434,9 +429,6 @@ function onPickUser(uid) {
 function updateOwnerUI(isOwner) {
   const btn = document.getElementById('ltab-ignore-btn');
   if (btn) btn.style.display = isOwner ? '' : 'none';
-  // Visit Stats tab also only relevant for your own log
-  const statsTab = document.getElementById('ltab-stats');
-  if (statsTab) statsTab.style.display = isOwner ? '' : 'none';
 }
 
 // ── People modal ─────────────────────────────────────────────────────────────
@@ -700,12 +692,11 @@ function setSideTab(tab) {
 }
 
 function setLogTab(tab) {
-  ['shots','stats'].forEach(t => {
+  ['shots'].forEach(t => {
     document.getElementById('ltab-'+t).classList.toggle('active', t===tab);
     document.getElementById('lpanel-'+t).classList.toggle('active', t===tab);
   });
   adminStatus('');
-  if (tab==='stats') adminRenderStats();
 }
 
 function openIgnore() {
