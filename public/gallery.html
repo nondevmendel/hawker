@@ -544,7 +544,7 @@ async function load(uid) {
     if (!myUid) myUid = data.isOwner ? data.uid : null;
     updateOwnerUI(!!data.isOwner);
     const lbl = document.getElementById('log-viewer-label');
-    if (lbl) lbl.textContent = data.isOwner ? 'My Log' : ((cachedProfile?.name || cachedProfile?.username || 'User') + ''s Log');
+    if (lbl) lbl.textContent = data.isOwner ? 'My Log' : ((cachedProfile?.name || cachedProfile?.username || 'User') + "'s Log");
     renderBrowser();
     renderStats(cachedVisits);
     renderIgnored(cachedConfig.ignored_urls || []);
