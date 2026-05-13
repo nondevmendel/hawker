@@ -1,0 +1,11 @@
+# Hawker Windows dependencies
+# Install with: pip install -r requirements.txt
+
+pillow>=10.0.0
+mss>=9.0.0
+pystray>=0.19.0
+uiautomation>=2.0.18
+
+# Optional: OCR-based sensitive-data redaction
+# Requires Tesseract OCR engine: https://github.com/UB-Mannheim/tesseract/wiki
+# pytesseract>=0.3.10
