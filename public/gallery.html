@@ -13,6 +13,7 @@
   * { box-sizing:border-box; margin:0; padding:0; }
   body { background:var(--bg); color:var(--text); font-family:var(--font); min-height:100vh; }
 
+  /* ── header ── */
   header {
     position:sticky; top:0; z-index:100;
     background:rgba(15,15,15,.94); backdrop-filter:blur(12px);
@@ -25,11 +26,54 @@
   .logo-text h1 span { color:var(--accent); }
   .logo-text p { font-size:11px; color:var(--muted); margin-top:1px; }
   .header-right { margin-left:auto; display:flex; align-items:center; gap:10px; }
-  #dot { width:7px; height:7px; border-radius:50%; background:#4caf50; animation:pulse 2s infinite; }
+  #dot { width:7px; height:7px; border-radius:50%; background:#4caf50; animation:pulse 2s infinite; flex-shrink:0; }
   @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.35} }
-  #refresh-info { font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums; }
+  #refresh-info { font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums; min-width:180px; display:inline-block; }
+  .hdr-btn {
+    font-size:12px; color:var(--muted); text-decoration:none; border:1px solid var(--border);
+    padding:5px 12px; border-radius:6px; transition:.12s; background:none; cursor:pointer; white-space:nowrap;
+  }
+  .hdr-btn:hover { color:var(--text); border-color:var(--accent); }
 
-  main { padding:24px 28px; max-width:1600px; margin:0 auto; }
+  /* ── leaderboard section ── */
+  #leaderboard { padding:24px 28px 0; max-width:1600px; margin:0 auto; }
+  .lb-section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+  .lb-section-title { font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); }
+  .period-toggle { display:flex; border:1px solid var(--border); border-radius:7px; overflow:hidden; }
+  .pt-btn { background:none; border:none; border-right:1px solid var(--border); color:var(--muted); padding:5px 14px; cursor:pointer; font-size:12px; font-weight:500; transition:.12s; }
+  .pt-btn:last-child { border-right:none; }
+  .pt-btn.active { background:var(--accent); color:#fff; }
+  .pt-btn:hover:not(.active) { color:var(--text); background:rgba(74,158,255,.09); }
+
+  .awards-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:24px; }
+  @media(max-width:780px) { .awards-grid { grid-template-columns:1fr; } }
+
+  .award-card {
+    background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px 18px;
+  }
+  .award-card-header { display:flex; align-items:center; gap:10px; margin-bottom:4px; }
+  .award-emoji { font-size:22px; }
+  .award-title { font-size:15px; font-weight:700; }
+  .award-sub { font-size:11px; color:var(--muted); margin-bottom:16px; padding-left:32px; }
+  .award-entries { display:flex; flex-direction:column; gap:8px; }
+  .award-entry { display:flex; align-items:center; gap:10px; padding:9px 12px; background:var(--bg); border:1px solid var(--border); border-radius:8px; }
+  .award-medal { font-size:16px; width:22px; text-align:center; flex-shrink:0; }
+  .award-name { font-size:13px; font-weight:600; flex:1; }
+  .award-name.is-me { color:var(--accent); }
+  .award-val { font-size:13px; font-weight:700; color:var(--text); text-align:right; font-variant-numeric:tabular-nums; }
+  .award-val-lbl { font-size:10px; color:var(--muted); text-align:right; }
+
+  /* ── main log area ── */
+  main { padding:0 28px 24px; max-width:1600px; margin:0 auto; }
+
+  .user-picker-bar { display:flex; align-items:center; gap:10px; margin-bottom:12px; padding-top:20px; }
+  .user-picker-bar label { font-size:12px; color:var(--muted); white-space:nowrap; }
+  .user-picker-bar select {
+    background:var(--surface); border:1px solid var(--border); border-radius:6px;
+    color:var(--text); padding:5px 10px; font-size:13px; outline:none; cursor:pointer;
+    transition:border-color .15s; color-scheme:dark; flex-shrink:0;
+  }
+  .user-picker-bar select:focus { border-color:var(--accent); }
 
   .layout { display:grid; grid-template-columns:1fr 220px; gap:24px; align-items:start; }
   @media(max-width:860px) { .layout{grid-template-columns:1fr} .sidebar{display:none} }
@@ -41,7 +85,6 @@
   .tgl-btn:hover:not(.active) { background:rgba(74,158,255,.09); color:var(--text); }
 
   .browser-body { display:grid; grid-template-columns:200px 1fr; border:1px solid var(--border); border-radius:10px; overflow:hidden; min-height:400px; }
-
   .group-col { display:flex; flex-direction:column; border-right:1px solid var(--border); max-height:62vh; }
   .group-header { padding:8px 10px; border-bottom:1px solid var(--border); display:flex; flex-direction:column; gap:7px; flex-shrink:0; }
   .group-header .date-select { width:100%; font-size:12px; padding:6px 8px; max-width:none; }
@@ -66,26 +109,22 @@
   .group-item.active .g-label { color:var(--accent); }
   .g-count { font-size:10px; color:var(--muted); background:rgba(255,255,255,.05); padding:2px 6px; border-radius:9px; }
 
-  .shot-panel {
-    padding:14px; display:flex; flex-wrap:wrap; align-content:flex-start;
-    gap:10px; overflow-y:auto; max-height:62vh;
-  }
-  .shot-thumb {
-    width:172px; height:113px; object-fit:cover; border-radius:7px;
-    cursor:pointer; border:2px solid transparent; flex-shrink:0;
-    transition:border-color .12s, transform .12s;
-  }
+  .shot-panel { padding:14px; display:flex; flex-wrap:wrap; align-content:flex-start; gap:10px; overflow-y:auto; max-height:62vh; }
+  .shot-thumb { width:172px; height:113px; object-fit:cover; border-radius:7px; cursor:pointer; border:2px solid transparent; flex-shrink:0; transition:border-color .12s, transform .12s; }
   .shot-thumb:hover { border-color:var(--accent); transform:scale(1.03); }
-  .shot-tomb {
-    width:172px; height:113px; border-radius:7px; flex-shrink:0;
-    background:#111; border:2px solid var(--border);
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
-    opacity:.5; cursor:default;
-  }
+  .shot-tomb { width:172px; height:113px; border-radius:7px; flex-shrink:0; background:#111; border:2px solid var(--border); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; opacity:.5; cursor:default; }
   .shot-tomb .tomb-icon { font-size:18px; }
   .shot-tomb .tomb-lbl { font-size:10px; color:var(--muted); }
   .shot-tomb .tomb-domain { font-size:11px; color:var(--accent); font-weight:600; }
   .empty-panel { display:flex; align-items:center; justify-content:center; width:100%; color:var(--muted); font-size:13px; }
+  .shot-wrap { position:relative; display:inline-block; width:172px; height:113px; flex-shrink:0; }
+  .shot-wrap .shot-thumb { width:100%; height:100%; }
+  .shot-del-overlay {
+    position:absolute; top:5px; right:5px; background:rgba(0,0,0,.65); border:none; color:#fff; border-radius:50%;
+    width:22px; height:22px; font-size:11px; cursor:pointer; opacity:0; transition:opacity .15s;
+    display:flex; align-items:center; justify-content:center; padding:0;
+  }
+  .shot-wrap:hover .shot-del-overlay { opacity:1; }
 
   .sidebar { display:flex; flex-direction:column; gap:16px; }
   .s-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:15px; }
@@ -99,33 +138,12 @@
   .stat-cell .lbl { font-size:9px; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); }
   .ignore-chip { display:inline-block; background:#111; border:1px solid var(--border); border-radius:4px; padding:3px 7px; font-size:10px; color:var(--muted); font-family:monospace; margin:2px 2px 2px 0; }
 
-  .date-select {
-    background:var(--surface); border:1px solid var(--border); border-radius:6px;
-    color:var(--text); cursor:pointer; outline:none;
-    transition:border-color .15s; color-scheme:dark;
-  }
+  .date-select { background:var(--surface); border:1px solid var(--border); border-radius:6px; color:var(--text); cursor:pointer; outline:none; transition:border-color .15s; color-scheme:dark; }
   .date-select:focus { border-color:var(--accent); }
-
-  .view-toggle { display:flex; border:1px solid var(--border); border-radius:7px; overflow:hidden; }
-  .vt-btn { background:none; border:none; color:var(--muted); padding:6px 14px; cursor:pointer; font-size:12px; font-weight:500; transition:.12s; border-right:1px solid var(--border); }
-  .vt-btn:last-child { border-right:none; }
-  .vt-btn.active { background:var(--accent); color:#fff; }
-  .vt-btn:hover:not(.active) { color:var(--text); background:rgba(74,158,255,.09); }
 
   .admin-status { font-size:12px; padding:8px 12px; border-radius:6px; margin-bottom:16px; display:none; }
   .admin-status.ok { display:block; background:rgba(76,175,80,.1); color:#4caf50; border:1px solid rgba(76,175,80,.2); }
   .admin-status.err { display:block; background:rgba(224,85,85,.1); color:#e05555; border:1px solid rgba(224,85,85,.2); }
-
-  .shot-wrap { position:relative; display:inline-block; width:172px; height:113px; flex-shrink:0; }
-  .shot-wrap .shot-thumb { width:100%; height:100%; }
-  .shot-del-overlay {
-    position:absolute; top:5px; right:5px;
-    background:rgba(0,0,0,.65); border:none; color:#fff; border-radius:50%;
-    width:22px; height:22px; font-size:11px; cursor:pointer;
-    opacity:0; transition:opacity .15s;
-    display:flex; align-items:center; justify-content:center; padding:0;
-  }
-  .shot-wrap:hover .shot-del-overlay { opacity:1; }
 
   .log-subnav { display:flex; gap:6px; margin-bottom:16px; align-items:center; flex-wrap:wrap; }
   .log-tab { background:none; border:1px solid var(--border); color:var(--muted); padding:6px 14px; border-radius:6px; cursor:pointer; font-size:12px; font-weight:500; transition:.12s; }
@@ -155,28 +173,33 @@
   .stats-lbl { font-size:10px; color:var(--muted); margin-top:2px; }
   .stats-sub { font-size:11px; color:var(--muted); margin-top:3px; }
 
-  .following-main { padding:24px 28px; max-width:900px; margin:0 auto; display:none; }
-  .following-main.visible { display:block; }
-  .following-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
-  .following-header h2 { font-size:16px; font-weight:700; }
-  .follow-add-row { display:flex; gap:8px; }
-  .follow-add-row input { background:var(--surface); border:1px solid var(--border); color:var(--text); padding:8px 12px; border-radius:6px; font-size:13px; outline:none; width:220px; transition:border-color .15s; }
-  .follow-add-row input:focus { border-color:var(--accent); }
-  .leaderboard { display:flex; flex-direction:column; gap:8px; }
-  .lb-row { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:14px 18px; display:flex; align-items:center; gap:18px; }
-  .lb-rank { font-size:22px; font-weight:700; color:var(--border); width:28px; text-align:center; }
-  .lb-avatar { width:38px; height:38px; border-radius:50%; background:var(--border); display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
-  .lb-info { flex:1; }
-  .lb-name { font-size:14px; font-weight:600; }
-  .lb-sub { font-size:11px; color:var(--muted); margin-top:2px; }
-  .lb-stats { display:flex; gap:20px; }
-  .lb-stat { display:flex; flex-direction:column; align-items:flex-end; }
-  .lb-stat .val { font-size:15px; font-weight:700; color:var(--accent); }
-  .lb-stat .lbl { font-size:10px; color:var(--muted); }
-  .coming-soon-banner { border:1px dashed var(--border); border-radius:10px; padding:40px; text-align:center; color:var(--muted); margin-top:20px; }
-  .coming-soon-banner h3 { font-size:15px; font-weight:600; color:var(--text); margin-bottom:8px; }
-  .coming-soon-banner p { font-size:13px; line-height:1.6; }
+  /* ── People modal ── */
+  #people-modal {
+    display:none; position:fixed; inset:0; z-index:300;
+    background:rgba(0,0,0,.75); backdrop-filter:blur(6px);
+    align-items:flex-start; justify-content:center; padding-top:60px;
+  }
+  #people-modal.open { display:flex; }
+  .modal-box {
+    background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    width:480px; max-width:95vw; max-height:80vh; overflow-y:auto; padding:24px;
+  }
+  .modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+  .modal-header h2 { font-size:16px; font-weight:700; }
+  .modal-close { background:none; border:none; color:var(--muted); font-size:22px; cursor:pointer; line-height:1; }
+  .modal-close:hover { color:var(--text); }
+  .people-list { display:flex; flex-direction:column; gap:8px; }
+  .person-row { background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:12px 14px; display:flex; align-items:center; gap:14px; }
+  .p-avatar { width:36px; height:36px; border-radius:50%; background:var(--border); display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0; cursor:pointer; }
+  .p-info { flex:1; cursor:pointer; }
+  .p-name { font-size:14px; font-weight:600; }
+  .p-sub { font-size:11px; color:var(--muted); margin-top:2px; }
+  .follow-btn { background:rgba(74,158,255,.12); border:1px solid rgba(74,158,255,.3); color:var(--accent); padding:5px 13px; border-radius:6px; cursor:pointer; font-size:12px; font-weight:500; transition:.12s; white-space:nowrap; }
+  .follow-btn:hover { background:rgba(74,158,255,.22); }
+  .follow-btn.following { background:#222; border-color:var(--border); color:var(--muted); }
+  .follow-btn.following:hover { border-color:#e05555; color:#e05555; }
 
+  /* ── Lightbox ── */
   #lb { display:none; position:fixed; inset:0; z-index:200; background:rgba(0,0,0,.9); backdrop-filter:blur(8px); align-items:center; justify-content:center; flex-direction:column; gap:12px; cursor:pointer; }
   #lb.open { display:flex; }
   #lb img { max-width:95vw; max-height:87vh; border-radius:8px; box-shadow:0 32px 80px rgba(0,0,0,.8); }
@@ -189,7 +212,6 @@
 </style>
 </head>
 <body>
-
 
 <header>
   <div class="logo">
@@ -206,21 +228,59 @@
     </div>
   </div>
   <div class="header-right">
-    <div style="display:flex;flex-direction:column;align-items:flex-start;gap:4px">
-      <div class="view-toggle">
-        <button class="vt-btn active" id="btn-log" onclick="viewMyLog()"><span id="viewing-name">My Log</span></button>
-        <button class="vt-btn" id="btn-following" onclick="setView('following')">Following</button>
-      </div>
-      <div style="display:flex;align-items:center;gap:6px;padding-left:2px">
-        <span id="dot"></span>
-        <span id="refresh-info" style="font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;min-width:180px;display:inline-block">Loading…</span>
-      </div>
-    </div>
-    <a href="/install" style="font-size:11px;color:var(--muted);text-decoration:none;border:1px solid var(--border);padding:5px 12px;border-radius:6px;transition:.12s" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">⬇ Get the App</a>
+    <span id="dot"></span>
+    <span id="refresh-info">Loading…</span>
+    <button class="hdr-btn" onclick="openPeople()">👥 People</button>
+    <a href="/install" class="hdr-btn">⬇ Get the App</a>
   </div>
 </header>
 
+<!-- ── Leaderboard ── -->
+<section id="leaderboard">
+  <div class="lb-section-header">
+    <span class="lb-section-title">Hall of Shame</span>
+    <div class="period-toggle">
+      <button class="pt-btn active" id="pt-week" onclick="setLbPeriod('week')">This Week</button>
+      <button class="pt-btn" id="pt-day" onclick="setLbPeriod('day')">Today</button>
+    </div>
+  </div>
+  <div class="awards-grid">
+    <div class="award-card">
+      <div class="award-card-header">
+        <span class="award-emoji">🫣</span>
+        <span class="award-title">The Biggest Wimp</span>
+      </div>
+      <div class="award-sub">Most screenshots deleted</div>
+      <div id="lb-wimp" class="award-entries"></div>
+    </div>
+    <div class="award-card">
+      <div class="award-card-header">
+        <span class="award-emoji">🐭</span>
+        <span class="award-title">The Tweaker</span>
+      </div>
+      <div class="award-sub">Most site visits</div>
+      <div id="lb-tweaker" class="award-entries"></div>
+    </div>
+    <div class="award-card">
+      <div class="award-card-header">
+        <span class="award-emoji">🛋️</span>
+        <span class="award-title">The Sloucher</span>
+      </div>
+      <div class="award-sub">Most time on social media</div>
+      <div id="lb-sloucher" class="award-entries"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Log ── -->
 <main id="log-main">
+  <div class="user-picker-bar">
+    <label for="user-pick">Viewing:</label>
+    <select id="user-pick" onchange="onPickUser(this.value)">
+      <option value="">My Log</option>
+    </select>
+  </div>
+
   <div class="log-subnav">
     <button class="log-tab active" id="ltab-shots" onclick="setLogTab('shots')">Screenshots</button>
     <button class="log-tab" id="ltab-ignore" onclick="setLogTab('ignore')">Ignore List</button>
@@ -262,15 +322,20 @@
   </div>
 </main>
 
-<div id="following-main" class="following-main">
-  <div class="following-header">
-    <h2>People</h2>
-  </div>
-  <div id="people-list" style="display:flex;flex-direction:column;gap:8px">
-    <p style="color:var(--muted);font-size:13px">Loading…</p>
+<!-- ── People modal ── -->
+<div id="people-modal" onclick="if(event.target===this)closePeople()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>People</h2>
+      <button class="modal-close" onclick="closePeople()">×</button>
+    </div>
+    <div id="people-list" class="people-list">
+      <p style="color:var(--muted);font-size:13px">Loading…</p>
+    </div>
   </div>
 </div>
 
+<!-- ── Lightbox ── -->
 <div id="lb">
   <button id="lb-close" onclick="closeLb()">×</button>
   <img id="lb-img" src="" alt="" onclick="event.stopPropagation()">
@@ -287,6 +352,110 @@ let allEntries = [], viewEntries = [], lbIdx = 0, nextRefresh = Date.now() + REF
 let currentMode = 'hour', currentGroups = [], activeIdx = -1, selectedDate = null;
 let cachedVisits = {}, cachedConfig = {}, cachedProfile = null, viewingUid = null, myUid = null;
 
+// ── leaderboard ──────────────────────────────────────────────────────────────
+
+let lbPeriod = 'week';
+
+const FAKE_LB = {
+  week: {
+    wimp:    [{ name:'Jake M.',  val:47, sub:'pages hidden' }, { name:'Sarah K.', val:31, sub:'pages hidden' }, { name:'you', val:12, sub:'pages hidden', isMe:true }],
+    tweaker: [{ name:'Sarah K.', val:284, sub:'visits' },     { name:'Jake M.',  val:201, sub:'visits' },      { name:'you', val:34, sub:'visits', isMe:true }],
+    sloucher:[{ name:'Jake M.',  val:'5h 5m',  sub:'on social' }, { name:'Sarah K.', val:'4h 0m', sub:'on social' }, { name:'you', val:'45m', sub:'on social', isMe:true }],
+  },
+  day: {
+    wimp:    [{ name:'Sarah K.', val:9,  sub:'pages hidden' }, { name:'Jake M.',  val:6, sub:'pages hidden' },  { name:'you', val:2, sub:'pages hidden', isMe:true }],
+    tweaker: [{ name:'Jake M.',  val:52, sub:'visits' },       { name:'Sarah K.', val:44, sub:'visits' },       { name:'you', val:8, sub:'visits', isMe:true }],
+    sloucher:[{ name:'Sarah K.', val:'1h 12m', sub:'on social' }, { name:'Jake M.', val:'58m', sub:'on social' }, { name:'you', val:'12m', sub:'on social', isMe:true }],
+  },
+};
+const MEDALS = ['🥇','🥈','🥉'];
+
+function setLbPeriod(p) {
+  lbPeriod = p;
+  document.getElementById('pt-week').classList.toggle('active', p === 'week');
+  document.getElementById('pt-day').classList.toggle('active',  p === 'day');
+  renderLeaderboard();
+}
+
+function renderLeaderboard() {
+  const data = FAKE_LB[lbPeriod];
+  [['wimp', data.wimp], ['tweaker', data.tweaker], ['sloucher', data.sloucher]].forEach(([id, entries]) => {
+    document.getElementById('lb-' + id).innerHTML = entries.map((e, i) => `
+      <div class="award-entry">
+        <span class="award-medal">${MEDALS[i]}</span>
+        <span class="award-name${e.isMe ? ' is-me' : ''}">${e.name}</span>
+        <div style="text-align:right">
+          <div class="award-val">${e.val}</div>
+          <div class="award-val-lbl">${e.sub}</div>
+        </div>
+      </div>`).join('');
+  });
+}
+
+// ── user picker ──────────────────────────────────────────────────────────────
+
+async function loadUserPicker() {
+  try {
+    const data = await api('/api/users');
+    const sel = document.getElementById('user-pick');
+    const followed = (data.users || []).filter(u => u.following && !u.isMe);
+    sel.innerHTML = '<option value="">My Log</option>' +
+      followed.map(u => `<option value="${u.uid}">${u.name || u.username || 'User'}</option>`).join('');
+  } catch(_) {}
+}
+
+function onPickUser(uid) {
+  allEntries = []; viewEntries = []; activeIdx = -1; selectedDate = null;
+  renderBrowser();
+  load(uid || undefined);
+}
+
+// ── People modal ─────────────────────────────────────────────────────────────
+
+function openPeople() {
+  document.getElementById('people-modal').classList.add('open');
+  loadPeople();
+}
+function closePeople() { document.getElementById('people-modal').classList.remove('open'); }
+
+async function loadPeople() {
+  const el = document.getElementById('people-list');
+  el.innerHTML = '<p style="color:var(--muted);font-size:13px">Loading…</p>';
+  try {
+    const data = await api('/api/users');
+    const users = data.users || [];
+    if (!users.length) { el.innerHTML = '<p style="color:var(--muted);font-size:13px">No users yet.</p>'; return; }
+    el.innerHTML = users.map(u => `
+      <div class="person-row">
+        <div class="p-avatar" onclick="${u.isMe ? '' : `closePeople();onPickUser('${u.uid}')`}">
+          ${u.picture ? `<img src="${u.picture}" style="width:36px;height:36px;border-radius:50%;object-fit:cover">` : '👤'}
+        </div>
+        <div class="p-info" onclick="${u.isMe ? '' : `closePeople();onPickUser('${u.uid}')`}">
+          <div class="p-name">${u.name || u.username || 'User'}${u.isMe ? ' <span style="font-size:10px;color:var(--muted)">(you)</span>' : ''}</div>
+          <div class="p-sub">${u.shotCount} screenshot${u.shotCount!==1?'s':''}${u.lastShotAt ? ' · last ' + timeAgo(u.lastShotAt) : ''}</div>
+        </div>
+        ${!u.isMe ? `<button class="follow-btn${u.following?' following':''}" onclick="toggleFollow('${u.uid}',this)">
+          ${u.following ? 'Unfollow' : 'Follow'}
+        </button>` : ''}
+      </div>`).join('');
+    loadUserPicker();
+  } catch(e) { el.innerHTML = '<p style="color:#e05555;font-size:13px">Failed to load users.</p>'; }
+}
+
+async function toggleFollow(uid, btn) {
+  const following = btn.classList.contains('following');
+  btn.disabled = true;
+  try {
+    await api('/api/follow', 'POST', { uid, action: following ? 'unfollow' : 'follow' });
+    btn.textContent = following ? 'Follow' : 'Unfollow';
+    btn.classList.toggle('following', !following);
+    loadUserPicker();
+  } catch(e) { alert('Failed: ' + e.message); }
+  btn.disabled = false;
+}
+
+// ── helpers ───────────────────────────────────────────────────────────────────
+
 function fmtTime(s) {
   if (!s) return '';
   const h = Math.floor(s/3600), m = Math.floor((s%3600)/60);
@@ -297,6 +466,22 @@ function weekKey() {
   const wk = Math.ceil((d - new Date(yr,0,1)) / 604800000);
   return `${yr}-W${String(wk).padStart(2,'0')}`;
 }
+function timeAgo(iso) {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff/60000), h = Math.floor(m/60), d = Math.floor(h/24);
+  if (d > 0) return `${d}d ago`;
+  if (h > 0) return `${h}h ago`;
+  return `${m}m ago`;
+}
+async function api(path, method = 'GET', body = null) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(path, opts);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json();
+}
+
+// ── data loading ──────────────────────────────────────────────────────────────
 
 async function load(uid) {
   try {
@@ -305,85 +490,71 @@ async function load(uid) {
     if (r.status === 401 || r.redirected) { window.location = '/api/auth/signin?callbackUrl=' + encodeURIComponent('/gallery.html'); return; }
     const data = await r.json();
     allEntries   = data.entries || [];
-    cachedVisits = data.visits || {};
-    cachedConfig = data.config || {};
+    cachedVisits = data.visits  || {};
+    cachedConfig = data.config  || {};
     cachedProfile = data.profile || null;
     viewingUid   = data.uid || null;
     if (!myUid) myUid = data.isOwner ? data.uid : null;
     renderBrowser();
     renderStats(cachedVisits);
     renderIgnored(cachedConfig.ignored_urls || []);
-    if (cachedProfile) {
-      const nameEl = document.getElementById('viewing-name');
-      if (nameEl) nameEl.textContent = data.isOwner ? 'My Log' : (cachedProfile.name || cachedProfile.username || 'User\'s Log');
-    }
   } catch(e) {
     document.getElementById('gallery').innerHTML = '<p style="color:var(--muted);padding:40px 0">Failed to load — retrying…</p>';
   }
 }
 
-function getFilteredEntries(includeDeleted = false) {
-  return allEntries.filter(e =>
-    (includeDeleted || !e.deleted) && (!selectedDate || e.iso.startsWith(selectedDate))
-  );
-}
+// ── browser rendering ─────────────────────────────────────────────────────────
 
+function getFilteredEntries(includeDeleted = false) {
+  return allEntries.filter(e => (includeDeleted || !e.deleted) && (!selectedDate || e.iso.startsWith(selectedDate)));
+}
 function getUniqueDates() {
   const seen = new Map();
-  allEntries.forEach(e => {
-    const d = e.iso.slice(0, 10);
-    if (!seen.has(d)) seen.set(d, e.date);
-  });
-  return [...seen.entries()].sort((a, b) => b[0].localeCompare(a[0]));
+  allEntries.forEach(e => { const d = e.iso.slice(0,10); if (!seen.has(d)) seen.set(d, e.date); });
+  return [...seen.entries()].sort((a,b) => b[0].localeCompare(a[0]));
 }
-
 function getGroupKey(e, mode) {
   if (mode === 'hour') {
     const d = new Date(e.iso);
-    const ds = d.toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric'});
+    const ds = d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
     const h = d.getHours(), ampm = h >= 12 ? 'PM' : 'AM';
-    return `${ds} · ${h % 12 || 12}:00 ${ampm}`;
+    return `${ds} · ${h%12||12}:00 ${ampm}`;
   }
   return e.domain || 'unknown';
 }
-
 function buildGroups(mode) {
   const m = new Map();
   getFilteredEntries(true).forEach(e => {
     const k = getGroupKey(e, mode);
-    if (!m.has(k)) m.set(k, { key: k, entries: [], sortIso: e.iso });
+    if (!m.has(k)) m.set(k, { key:k, entries:[], sortIso:e.iso });
     m.get(k).entries.push(e);
   });
   const arr = [...m.values()];
-  if (mode === 'hour') arr.sort((a, b) => b.sortIso.localeCompare(a.sortIso));
-  else arr.sort((a, b) => b.entries.length - a.entries.length);
+  if (mode === 'hour') arr.sort((a,b) => b.sortIso.localeCompare(a.sortIso));
+  else arr.sort((a,b) => b.entries.length - a.entries.length);
   return arr;
 }
-
 function setMode(mode) { currentMode = mode; activeIdx = 0; renderBrowser(); }
 function setDate(val) { selectedDate = val || null; activeIdx = 0; renderBrowser(); }
 
 function shotThumb(e, i) {
   if (e.deleted) {
     return `<div class="shot-tomb" title="${e.display}">
-      <span class="tomb-icon">🚫</span>
-      <span class="tomb-lbl">removed</span>
-      <span class="tomb-domain">${e.domain || ''}</span>
-    </div>`;
+      <span class="tomb-icon">🚫</span><span class="tomb-lbl">removed</span>
+      <span class="tomb-domain">${e.domain||''}</span></div>`;
   }
+  const canDelete = !viewingUid || viewingUid === myUid;
   return `<div class="shot-wrap">
     <img class="shot-thumb" src="${e.url}" loading="lazy" onclick="openLb(${i})" alt="" title="${e.display}">
-    <button class="shot-del-overlay" onclick="galleryDelete('${e.stem}','${e.domain||''}',event)" title="Delete">✕</button>
+    ${canDelete ? `<button class="shot-del-overlay" onclick="galleryDelete('${e.stem}','${e.domain||''}',event)" title="Delete">✕</button>` : ''}
   </div>`;
 }
 
 function hoverGroup(idx) {
   if (idx === activeIdx) return;
   activeIdx = idx;
-  document.querySelectorAll('.group-item').forEach(el => {
-    el.classList.toggle('active', +el.dataset.gi === idx);
-  });
-  const entries = (currentGroups[idx] || {}).entries || [];
+  document.querySelectorAll('.group-item').forEach(el => el.classList.toggle('active', +el.dataset.gi === idx));
+  const entries = (currentGroups[idx]||{}).entries||[];
   viewEntries = entries;
   document.getElementById('shot-panel').innerHTML = entries.length
     ? entries.map(shotThumb).join('')
@@ -393,19 +564,14 @@ function hoverGroup(idx) {
 function renderBrowser() {
   currentGroups = buildGroups(currentMode);
   if (activeIdx < 0 || activeIdx >= currentGroups.length) activeIdx = 0;
-
-  const gallery = document.getElementById('gallery');
   const live = getFilteredEntries().length;
   document.getElementById('refresh-info').textContent = `${live} screenshot${live!==1?'s':''}`;
 
   const dates = getUniqueDates();
-  const dateOpts = dates.map(([iso, label]) =>
-    `<option value="${iso}"${selectedDate===iso?' selected':''}>${label}</option>`
-  ).join('');
+  const dateOpts = dates.map(([iso,label]) => `<option value="${iso}"${selectedDate===iso?' selected':''}>${label}</option>`).join('');
   const leftHeader = `<div class="group-header">
     <select class="date-select" onchange="setDate(this.value)">
-      <option value=""${!selectedDate?' selected':''}>All dates</option>
-      ${dateOpts}
+      <option value=""${!selectedDate?' selected':''}>All dates</option>${dateOpts}
     </select>
     <div class="toggle-bar">
       <button class="tgl-btn${currentMode==='hour'?' active':''}" onclick="setMode('hour')">By Hour</button>
@@ -413,11 +579,11 @@ function renderBrowser() {
     </div>
   </div>`;
 
+  const gallery = document.getElementById('gallery');
   if (!getFilteredEntries(true).length) {
     gallery.innerHTML = `<div class="browser-body">
       <div class="group-col">${leftHeader}<div class="group-list"></div></div>
-      <div class="shot-panel"><div class="empty-panel">No screenshots yet. Hawker captures when you browse social media.</div></div>
-    </div>`;
+      <div class="shot-panel"><div class="empty-panel">No screenshots yet.</div></div></div>`;
     return;
   }
 
@@ -425,59 +591,45 @@ function renderBrowser() {
   currentGroups.forEach((g, i) => {
     if (currentMode === 'hour') {
       const [date, hour] = g.key.split(' · ');
-      if (!selectedDate && date !== lastDate) {
-        listHtml += `<div class="group-date">${date}</div>`;
-        lastDate = date;
-      }
-      const liveCount = g.entries.filter(e => !e.deleted).length;
+      if (!selectedDate && date !== lastDate) { listHtml += `<div class="group-date">${date}</div>`; lastDate = date; }
+      const lc = g.entries.filter(e=>!e.deleted).length;
       listHtml += `<div class="group-item${i===activeIdx?' active':''}" data-gi="${i}" onmouseenter="hoverGroup(${i})">
-        <span class="g-label">${hour}</span><span class="g-count">${liveCount}</span>
-      </div>`;
+        <span class="g-label">${hour}</span><span class="g-count">${lc}</span></div>`;
     } else {
-      const liveCount = g.entries.filter(e => !e.deleted).length;
+      const lc = g.entries.filter(e=>!e.deleted).length;
       listHtml += `<div class="group-item${i===activeIdx?' active':''}" data-gi="${i}" onmouseenter="hoverGroup(${i})">
-        <span class="g-label">${g.key}</span><span class="g-count">${liveCount}</span>
-      </div>`;
+        <span class="g-label">${g.key}</span><span class="g-count">${lc}</span></div>`;
     }
   });
 
-  viewEntries = (currentGroups[activeIdx] || {}).entries || [];
-  const panelHtml = viewEntries.length
-    ? viewEntries.map(shotThumb).join('')
-    : '<div class="empty-panel">No screenshots in this period</div>';
-
+  viewEntries = (currentGroups[activeIdx]||{}).entries||[];
+  const panelHtml = viewEntries.length ? viewEntries.map(shotThumb).join('') : '<div class="empty-panel">No screenshots in this period</div>';
   gallery.innerHTML = `<div class="browser-body">
     <div class="group-col">${leftHeader}<div class="group-list">${listHtml}</div></div>
-    <div class="shot-panel" id="shot-panel">${panelHtml}</div>
-  </div>`;
+    <div class="shot-panel" id="shot-panel">${panelHtml}</div></div>`;
 }
 
-function openLb(i) {
-  if (!viewEntries[i] || viewEntries[i].deleted) return;
-  lbIdx = i; showLb();
-  document.getElementById('lb').classList.add('open');
-}
+// ── lightbox ──────────────────────────────────────────────────────────────────
+
+function openLb(i) { if (!viewEntries[i]||viewEntries[i].deleted) return; lbIdx=i; showLb(); document.getElementById('lb').classList.add('open'); }
 function showLb() {
   const e = viewEntries[lbIdx];
   document.getElementById('lb-img').src = e.url;
   document.getElementById('lb-meta').textContent = e.display + (e.domain ? `  ·  ${e.domain}` : '');
   document.getElementById('lb-prev').disabled = lbIdx === 0;
-  document.getElementById('lb-next').disabled = lbIdx === viewEntries.length - 1;
+  document.getElementById('lb-next').disabled = lbIdx === viewEntries.length-1;
 }
-function lbStep(dir) {
-  const n = lbIdx + dir;
-  if (n >= 0 && n < viewEntries.length) { lbIdx = n; showLb(); }
-}
+function lbStep(dir) { const n=lbIdx+dir; if(n>=0&&n<viewEntries.length){lbIdx=n;showLb();} }
 function closeLb() { document.getElementById('lb').classList.remove('open'); }
-document.getElementById('lb').addEventListener('click', function(e) {
-  if (e.target === this) closeLb();
-});
+document.getElementById('lb').addEventListener('click', function(e) { if(e.target===this) closeLb(); });
 document.addEventListener('keydown', e => {
   if (!document.getElementById('lb').classList.contains('open')) return;
-  if (e.key === 'Escape') closeLb();
-  if (e.key === 'ArrowLeft') lbStep(-1);
-  if (e.key === 'ArrowRight') lbStep(1);
+  if (e.key==='Escape') closeLb();
+  if (e.key==='ArrowLeft') lbStep(-1);
+  if (e.key==='ArrowRight') lbStep(1);
 });
+
+// ── stats / config panels ─────────────────────────────────────────────────────
 
 function renderStats(visits) {
   const el = document.getElementById('stats-list');
@@ -494,178 +646,69 @@ function renderStats(visits) {
         <div class="stat-cell"><span class="val">${(v.total_visits/ad).toFixed(1)}</span><span class="lbl">avg/day</span></div>
         <div class="stat-cell"><span class="val">${fmtTime(Math.round((v.total_time_seconds||0)/ad))||'—'}</span><span class="lbl">avg time/day</span></div>
         <div class="stat-cell"><span class="val">${fmtTime(Math.round((v.total_time_seconds||0)/aw))||'—'}</span><span class="lbl">avg time/wk</span></div>
-      </div>
-    </div>`;
+      </div></div>`;
   }).join('');
 }
 
 function renderIgnored(list) {
   if (!list.length) return;
-  document.getElementById('ignore-list').innerHTML = list.map(p => `<span class="ignore-chip">${p}</span>`).join('');
-}
-
-let currentView = 'log';
-
-function setView(view) {
-  currentView = view;
-  document.getElementById('log-main').style.display = view === 'log' ? '' : 'none';
-  document.getElementById('following-main').classList.toggle('visible', view === 'following');
-  ['log', 'following'].forEach(v => {
-    document.getElementById('btn-' + v).classList.toggle('active', v === view);
-  });
-  if (view === 'following') loadPeople();
-}
-
-async function loadPeople() {
-  const el = document.getElementById('people-list');
-  el.innerHTML = '<p style="color:var(--muted);font-size:13px">Loading…</p>';
-  try {
-    const data = await api('/api/users');
-    const users = data.users || [];
-    if (!users.length) { el.innerHTML = '<p style="color:var(--muted);font-size:13px">No other users yet.</p>'; return; }
-    el.innerHTML = users.map(u => `
-      <div class="lb-row" style="cursor:pointer">
-        <div class="lb-avatar" onclick="viewUserLog('${u.uid}')" style="cursor:pointer">
-          ${u.picture ? `<img src="${u.picture}" style="width:38px;height:38px;border-radius:50%;object-fit:cover">` : '👤'}
-        </div>
-        <div class="lb-info" onclick="viewUserLog('${u.uid}')" style="flex:1">
-          <div class="lb-name">${u.name || u.username || 'User'} ${u.isMe ? '<span style="font-size:10px;color:var(--muted)">(you)</span>' : ''}</div>
-          <div class="lb-sub">${u.shotCount} screenshot${u.shotCount!==1?'s':''} total${u.lastShotAt ? ' · last ' + timeAgo(u.lastShotAt) : ''}</div>
-        </div>
-        ${!u.isMe ? `<button onclick="toggleFollow('${u.uid}',this)" class="btn-add" style="padding:6px 14px;font-size:12px;${u.following?'background:#333;color:#aaa':''}">
-          ${u.following ? 'Unfollow' : 'Follow'}
-        </button>` : ''}
-      </div>
-    `).join('');
-  } catch(e) { el.innerHTML = '<p style="color:#e05555;font-size:13px">Failed to load users.</p>'; }
-}
-
-async function toggleFollow(uid, btn) {
-  const following = btn.textContent.trim() === 'Unfollow';
-  btn.disabled = true;
-  try {
-    await api('/api/follow', 'POST', { uid, action: following ? 'unfollow' : 'follow' });
-    btn.textContent = following ? 'Follow' : 'Unfollow';
-    btn.style.background = following ? '' : '#333';
-    btn.style.color = following ? '' : '#aaa';
-  } catch(e) { alert('Failed: ' + e.message); }
-  btn.disabled = false;
-}
-
-function viewUserLog(uid) {
-  document.getElementById('viewing-name').textContent = 'Loading…';
-  setView('log');
-  allEntries = []; viewEntries = []; activeIdx = -1; selectedDate = null;
-  renderBrowser();
-  load(uid);
-}
-
-function viewMyLog() {
-  document.getElementById('viewing-name').textContent = 'My Log';
-  setView('log');
-  allEntries = []; viewEntries = []; activeIdx = -1; selectedDate = null;
-  renderBrowser();
-  load();
-}
-
-function timeAgo(iso) {
-  const diff = Date.now() - new Date(iso).getTime();
-  const m = Math.floor(diff/60000), h = Math.floor(m/60), d = Math.floor(h/24);
-  if (d > 0) return `${d}d ago`;
-  if (h > 0) return `${h}h ago`;
-  return `${m}m ago`;
+  document.getElementById('ignore-list').innerHTML = list.map(p=>`<span class="ignore-chip">${p}</span>`).join('');
 }
 
 function setLogTab(tab) {
-  ['shots', 'ignore', 'stats'].forEach(t => {
-    document.getElementById('ltab-' + t).classList.toggle('active', t === tab);
-    document.getElementById('lpanel-' + t).classList.toggle('active', t === tab);
+  ['shots','ignore','stats'].forEach(t => {
+    document.getElementById('ltab-'+t).classList.toggle('active', t===tab);
+    document.getElementById('lpanel-'+t).classList.toggle('active', t===tab);
   });
   adminStatus('');
-  if (tab === 'ignore') adminRenderIgnore();
-  if (tab === 'stats')  adminRenderStats();
+  if (tab==='ignore') adminRenderIgnore();
+  if (tab==='stats')  adminRenderStats();
 }
 
 function adminStatus(msg, type) {
   const el = document.getElementById('admin-status');
   el.textContent = msg;
-  el.className = 'admin-status ' + (type || '');
-}
-
-async function api(path, method = 'GET', body = null) {
-  const opts = { method, headers: { 'Content-Type': 'application/json' } };
-  if (body) opts.body = JSON.stringify(body);
-  const r = await fetch(path, opts);
-  if (!r.ok) throw new Error(`HTTP ${r.status}`);
-  return r.json();
-}
-
-async function galleryDelete(stem, domain, event) {
-  event.stopPropagation();
-  if (!confirm(`Delete this screenshot?\n\nA tombstone for "${domain || 'this site'}" will remain in your log.`)) return;
-  try {
-    await api('/api/delete', 'POST', { stem, domain });
-    load();
-  } catch(e) { alert('Delete failed: ' + e.message); }
+  el.className = 'admin-status '+(type||'');
 }
 
 let adminIgnored = [];
-
 async function adminRenderIgnore() {
-  try {
-    adminIgnored = (cachedConfig.ignored_urls || []);
-  } catch(e) { adminStatus('Failed to load config', 'err'); return; }
-
+  adminIgnored = cachedConfig.ignored_urls||[];
   const el = document.getElementById('admin-ignore-list');
-  if (!adminIgnored.length) {
-    el.innerHTML = '<div class="ignore-list-box"><div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">No patterns yet.</div></div>';
-    return;
-  }
-  el.innerHTML = '<div class="ignore-list-box">' +
-    adminIgnored.map((p, i) => `<div class="ignore-item">
-      <code>${p}</code>
-      <button class="btn-remove" onclick="adminRemoveIgnore(${i})">Remove</button>
-    </div>`).join('') + '</div>';
+  if (!adminIgnored.length) { el.innerHTML = '<div class="ignore-list-box"><div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">No patterns yet.</div></div>'; return; }
+  el.innerHTML = '<div class="ignore-list-box">' + adminIgnored.map((p,i) =>
+    `<div class="ignore-item"><code>${p}</code><button class="btn-remove" onclick="adminRemoveIgnore(${i})">Remove</button></div>`
+  ).join('') + '</div>';
 }
-
 async function adminAddIgnore() {
   const input = document.getElementById('new-pattern');
   const val = input.value.trim().toLowerCase();
   if (!val) return;
-  if (adminIgnored.includes(val)) { adminStatus('Already in list.', 'err'); return; }
+  if (adminIgnored.includes(val)) { adminStatus('Already in list.','err'); return; }
   adminIgnored.push(val);
   await adminSaveIgnore();
   input.value = '';
 }
-
-async function adminRemoveIgnore(idx) {
-  adminIgnored.splice(idx, 1);
-  await adminSaveIgnore();
-}
-
+async function adminRemoveIgnore(idx) { adminIgnored.splice(idx,1); await adminSaveIgnore(); }
 async function adminSaveIgnore() {
-  adminStatus('Saving…', 'ok');
+  adminStatus('Saving…','ok');
   try {
-    await api('/api/config', 'POST', { ignored_urls: adminIgnored });
-    cachedConfig.ignored_urls = [...adminIgnored];
-    adminStatus('Saved.', 'ok');
+    await api('/api/config','POST',{ignored_urls:adminIgnored});
+    cachedConfig.ignored_urls=[...adminIgnored];
+    adminStatus('Saved.','ok');
     adminRenderIgnore();
-  } catch(e) { adminStatus('Save failed: ' + e.message, 'err'); }
+  } catch(e) { adminStatus('Save failed: '+e.message,'err'); }
 }
-
 async function adminRenderStats() {
   const el = document.getElementById('admin-stats-grid');
-  el.innerHTML = '<p style="color:var(--muted);font-size:13px">Loading…</p>';
   const visits = cachedVisits;
-  const wk = weekKey();
-  const today = new Date().toISOString().slice(0,10);
+  const wk = weekKey(), today = new Date().toISOString().slice(0,10);
   const sorted = Object.entries(visits).sort((a,b) => (b[1].total_visits||0)-(a[1].total_visits||0));
   if (!sorted.length) { el.innerHTML = '<p style="color:var(--muted);font-size:13px;padding:20px 0">No visits recorded yet.</p>'; return; }
-  el.innerHTML = sorted.map(([domain, v]) => {
-    const wd = (v.weekly||{})[wk] || {};
-    const dd = (v.daily||{})[today] || {};
+  el.innerHTML = sorted.map(([domain,v]) => {
+    const wd=(v.weekly||{})[wk]||{}, dd=(v.daily||{})[today]||{};
     return `<div class="stats-row">
-      <div><div class="s-domain">${domain}</div><div class="s-last">Last: ${v.last_visit ? new Date(v.last_visit).toLocaleTimeString() : '—'}</div></div>
+      <div><div class="s-domain">${domain}</div><div class="s-last">Last: ${v.last_visit?new Date(v.last_visit).toLocaleTimeString():'—'}</div></div>
       <div><div class="stats-num">${v.total_visits||0}</div><div class="stats-lbl">Total visits</div></div>
       <div><div class="stats-num">${wd.visits||0}</div><div class="stats-lbl">This week</div><div class="stats-sub">${fmtTime(wd.time_seconds)}</div></div>
       <div><div class="stats-num">${dd.visits||0}</div><div class="stats-lbl">Today</div><div class="stats-sub">${fmtTime(dd.time_seconds)}</div></div>
@@ -674,17 +717,24 @@ async function adminRenderStats() {
   }).join('');
 }
 
+async function galleryDelete(stem, domain, event) {
+  event.stopPropagation();
+  if (!confirm(`Delete this screenshot?\n\nA tombstone for "${domain||'this site'}" will remain in your log.`)) return;
+  try { await api('/api/delete','POST',{stem,domain}); load(); } catch(e) { alert('Delete failed: '+e.message); }
+}
+
+// ── refresh ticker ────────────────────────────────────────────────────────────
+
 setInterval(() => {
   const rem = Math.max(0, nextRefresh - Date.now());
   const m = Math.floor(rem/60000), s = Math.floor((rem%60000)/1000);
   const live = allEntries.filter(e=>!e.deleted).length;
   document.getElementById('refresh-info').textContent =
     `${live} screenshot${live!==1?'s':''} — refreshes in ${m}:${String(s).padStart(2,'0')}`;
-  if (rem === 0) { nextRefresh = Date.now() + REFRESH_MS; load(); }
+  if (rem === 0) { nextRefresh = Date.now() + REFRESH_MS; load(viewingUid||undefined); }
 }, 1000);
 
-
-load();  // my own log on initial load
+// ── hawk animation ────────────────────────────────────────────────────────────
 
 const HAWK_FRAMES = [
 `  \\  _,_  /
@@ -711,7 +761,13 @@ const HAWK_FRAMES = [
 ];
 let hawkFrame = 1;
 const hawkEl = document.getElementById('hawk-anim');
-setInterval(() => { hawkFrame = (hawkFrame+1) % HAWK_FRAMES.length; hawkEl.textContent = HAWK_FRAMES[hawkFrame]; }, 380);
+setInterval(() => { hawkFrame=(hawkFrame+1)%HAWK_FRAMES.length; hawkEl.textContent=HAWK_FRAMES[hawkFrame]; }, 380);
+
+// ── init ──────────────────────────────────────────────────────────────────────
+
+renderLeaderboard();
+loadUserPicker();
+load();
 </script>
 </body>
 </html>
