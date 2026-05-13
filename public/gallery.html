@@ -84,9 +84,9 @@
   }
   .user-picker-bar select:focus { border-color:var(--accent); }
 
-  .layout { display:grid; grid-template-columns:1fr 220px; gap:24px; align-items:start; }
-  .layout > *:first-child { min-width:0; }
-  @media(max-width:860px) { .layout{grid-template-columns:1fr} .sidebar{display:none} }
+  .layout { display:grid; grid-template-columns:200px 1fr; gap:16px; align-items:stretch; }
+  .layout > * { min-width:0; }
+  @media(max-width:860px) { .layout{grid-template-columns:1fr} .panel-sidebar{display:none} }
 
   .toggle-bar { display:inline-flex; border:1px solid var(--border); border-radius:8px; overflow:hidden; margin-bottom:14px; }
   .tgl-btn { background:none; border:none; border-right:1px solid var(--border); color:var(--muted); padding:7px 20px; cursor:pointer; font-size:13px; font-weight:500; transition:.12s; }
@@ -136,9 +136,17 @@
   }
   .shot-wrap:hover .shot-del-overlay { opacity:1; }
 
-  .sidebar { display:flex; flex-direction:column; gap:16px; }
-  .s-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:15px; }
-  .s-card h3 { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); margin-bottom:11px; }
+  .panel-sidebar {
+    border:1px solid var(--border); border-radius:10px; overflow:hidden;
+    display:flex; flex-direction:column;
+  }
+  .panel-sidebar-hdr {
+    display:flex; border-bottom:1px solid var(--border); flex-shrink:0;
+  }
+  .panel-sidebar-hdr .tgl-btn { flex:1; padding:8px 0; font-size:11px; border-right:1px solid var(--border); }
+  .panel-sidebar-hdr .tgl-btn:last-child { border-right:none; }
+  .panel-sidebar-body { overflow-y:auto; flex:1; padding:12px; }
+  .log-viewer-label { font-size:11px; color:var(--muted); padding:8px 0 6px; letter-spacing:.3px; }
   .stat-block { padding:10px 0; border-bottom:1px solid var(--border); }
   .stat-block:last-child { border-bottom:none; }
   .stat-domain { color:var(--accent); font-weight:600; font-size:12px; margin-bottom:7px; }
@@ -300,26 +308,26 @@
     <button class="utab" id="utab-add" onclick="openPeople()" title="Follow someone">+</button>
   </div>
 
-  <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);padding:20px 0 12px">Screenshots</div>
   <div id="admin-status" class="admin-status"></div>
+  <div id="log-viewer-label" class="log-viewer-label">My Log</div>
 
   <div id="lpanel-shots" class="log-panel active">
     <div class="layout">
-      <div id="gallery"></div>
-      <div class="sidebar">
-        <div class="s-card" style="padding:0;overflow:hidden">
-          <div style="display:flex;border-bottom:1px solid var(--border)">
-            <button class="stab active" id="stab-sites" onclick="setSideTab('sites')" style="flex:1;background:none;border:none;border-right:1px solid var(--border);padding:9px 0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;cursor:pointer;color:var(--muted);transition:.12s">Top Sites</button>
-            <button class="stab" id="stab-ignored" onclick="setSideTab('ignored')" style="flex:1;background:none;border:none;padding:9px 0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;cursor:pointer;color:var(--muted);transition:.12s">Ignored</button>
-          </div>
-          <div id="spanel-sites" style="padding:12px">
+      <div class="panel-sidebar">
+        <div class="panel-sidebar-hdr toggle-bar" style="margin-bottom:0;border-radius:0;border:none">
+          <button class="tgl-btn active" id="stab-sites" onclick="setSideTab('sites')">Top Sites</button>
+          <button class="tgl-btn" id="stab-ignored" onclick="setSideTab('ignored')">Ignored</button>
+        </div>
+        <div class="panel-sidebar-body">
+          <div id="spanel-sites">
             <div id="stats-list"><span style="font-size:12px;color:var(--muted)">No data yet</span></div>
           </div>
-          <div id="spanel-ignored" style="padding:12px;display:none">
+          <div id="spanel-ignored" style="display:none">
             <div id="ignore-list"><span style="font-size:12px;color:var(--muted)">Nothing ignored</span></div>
           </div>
         </div>
       </div>
+      <div id="gallery"></div>
     </div>
   </div>
 
@@ -535,6 +543,8 @@ async function load(uid) {
     viewingUid   = data.uid || null;
     if (!myUid) myUid = data.isOwner ? data.uid : null;
     updateOwnerUI(!!data.isOwner);
+    const lbl = document.getElementById('log-viewer-label');
+    if (lbl) lbl.textContent = data.isOwner ? 'My Log' : ((cachedProfile?.name || cachedProfile?.username || 'User') + ''s Log');
     renderBrowser();
     renderStats(cachedVisits);
     renderIgnored(cachedConfig.ignored_urls || []);
@@ -700,12 +710,8 @@ function renderIgnored(list) {
 
 function setSideTab(tab) {
   ['sites','ignored'].forEach(t => {
-    const btn = document.getElementById('stab-'+t);
-    const panel = document.getElementById('spanel-'+t);
-    const active = t === tab;
-    btn.style.color = active ? 'var(--accent)' : 'var(--muted)';
-    btn.style.background = active ? 'rgba(74,158,255,.08)' : 'none';
-    panel.style.display = active ? '' : 'none';
+    document.getElementById('stab-'+t).classList.toggle('active', t===tab);
+    document.getElementById('spanel-'+t).style.display = t===tab ? '' : 'none';
   });
 }
 
