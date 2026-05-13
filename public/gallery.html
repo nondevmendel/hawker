@@ -558,6 +558,7 @@ function viewUserLog(uid) {
 
 function viewMyLog() {
   document.getElementById('viewing-name').textContent = 'My Log';
+  setView('log');
   allEntries = []; viewEntries = []; activeIdx = -1; selectedDate = null;
   renderBrowser();
   load();
