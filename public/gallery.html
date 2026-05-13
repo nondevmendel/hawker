@@ -297,6 +297,7 @@
 <main id="log-main">
   <div id="user-tabs" class="user-tabs">
     <button class="utab active" data-uid="" onclick="pickUserTab('',this)">My Log</button>
+    <button class="utab" id="utab-add" onclick="openPeople()" title="Follow someone">+</button>
   </div>
 
   <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);padding:20px 0 12px">Screenshots</div>
@@ -418,14 +419,15 @@ async function loadUserPicker() {
     const data = await api('/api/users');
     const tabs = document.getElementById('user-tabs');
     const followed = (data.users || []).filter(u => u.following && !u.isMe);
-    tabs.querySelectorAll('.utab:not([data-uid=""])').forEach(t => t.remove());
+    tabs.querySelectorAll('.utab:not([data-uid=""]):not(#utab-add)').forEach(t => t.remove());
+    const addBtn = document.getElementById('utab-add');
     followed.forEach(u => {
       const btn = document.createElement('button');
       btn.className = 'utab';
       btn.dataset.uid = u.uid;
       btn.textContent = u.name || u.username || 'User';
       btn.onclick = () => pickUserTab(u.uid, btn);
-      tabs.appendChild(btn);
+      tabs.insertBefore(btn, addBtn);
     });
   } catch(_) {}
 }
