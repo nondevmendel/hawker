@@ -283,8 +283,8 @@
 
   <div class="log-subnav">
     <button class="log-tab active" id="ltab-shots" onclick="setLogTab('shots')">Screenshots</button>
-    <button class="log-tab" id="ltab-ignore" onclick="setLogTab('ignore')">Ignore List</button>
     <button class="log-tab" id="ltab-stats" onclick="setLogTab('stats')">Visit Stats</button>
+    <button class="log-tab" id="ltab-ignore-btn" onclick="openIgnore()" style="margin-left:auto">⚙ Ignore List</button>
   </div>
   <div id="admin-status" class="admin-status"></div>
 
@@ -308,19 +308,8 @@
     </div>
   </div>
 
-  <div id="lpanel-ignore" class="log-panel">
-    <div class="ignore-wrap">
-      <div class="section-title">Ignored URL Patterns</div>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Substrings matched against the full URL. Changes take effect on the next poll.</p>
-      <div id="admin-ignore-list"></div>
-      <div class="add-row">
-        <input id="new-pattern" type="text" placeholder="e.g. facebook.com/reels">
-        <button class="btn-add" onclick="adminAddIgnore()">Add Pattern</button>
-      </div>
-    </div>
-  </div>
 
-  <div id="lpanel-stats" class="log-panel">
+<div id="lpanel-stats" class="log-panel">
     <div class="section-title">Social Media Visits</div>
     <div id="admin-stats-grid" class="stats-full-grid"></div>
   </div>
@@ -335,6 +324,22 @@
     </div>
     <div id="people-list" class="people-list">
       <p style="color:var(--muted);font-size:13px">Loading…</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── Ignore modal ── -->
+<div id="ignore-modal" onclick="if(event.target===this)closeIgnore()" style="display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);align-items:flex-start;justify-content:center;padding-top:60px">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Ignore List</h2>
+      <button class="modal-close" onclick="closeIgnore()">×</button>
+    </div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Substrings matched against the full URL. Changes take effect on the next poll.</p>
+    <div id="admin-ignore-list"></div>
+    <div class="add-row">
+      <input id="new-pattern" type="text" placeholder="e.g. facebook.com/reels">
+      <button class="btn-add" onclick="adminAddIgnore()">Add</button>
     </div>
   </div>
 </div>
@@ -412,6 +417,11 @@ function onPickUser(uid) {
   allEntries = []; viewEntries = []; activeIdx = -1; selectedDate = null;
   renderBrowser();
   load(uid || undefined);
+}
+
+function updateOwnerUI(isOwner) {
+  const btn = document.getElementById('ltab-ignore-btn');
+  if (btn) btn.style.display = isOwner ? '' : 'none';
 }
 
 // ── People modal ─────────────────────────────────────────────────────────────
@@ -499,6 +509,7 @@ async function load(uid) {
     cachedProfile = data.profile || null;
     viewingUid   = data.uid || null;
     if (!myUid) myUid = data.isOwner ? data.uid : null;
+    updateOwnerUI(!!data.isOwner);
     renderBrowser();
     renderStats(cachedVisits);
     renderIgnored(cachedConfig.ignored_urls || []);
@@ -542,12 +553,14 @@ function setMode(mode) { currentMode = mode; activeIdx = 0; renderBrowser(); }
 function setDate(val) { selectedDate = val || null; activeIdx = 0; renderBrowser(); }
 
 function shotThumb(e, i) {
+  const isOwner = !viewingUid || viewingUid === myUid;
   if (e.deleted) {
     return `<div class="shot-tomb" title="${e.display}">
-      <span class="tomb-icon">🚫</span><span class="tomb-lbl">removed</span>
+      <span class="tomb-icon">🫣</span>
+      <span class="tomb-lbl">Hidden… by a wimp</span>
       <span class="tomb-domain">${e.domain||''}</span></div>`;
   }
-  const canDelete = !viewingUid || viewingUid === myUid;
+  const canDelete = isOwner;
   return `<div class="shot-wrap">
     <img class="shot-thumb" src="${e.url}" loading="lazy" onclick="openLb(${i})" alt="" title="${e.display}">
     ${canDelete ? `<button class="shot-del-overlay" onclick="galleryDelete('${e.stem}','${e.domain||''}',event)" title="Delete">✕</button>` : ''}
@@ -672,14 +685,19 @@ function setSideTab(tab) {
 }
 
 function setLogTab(tab) {
-  ['shots','ignore','stats'].forEach(t => {
+  ['shots','stats'].forEach(t => {
     document.getElementById('ltab-'+t).classList.toggle('active', t===tab);
     document.getElementById('lpanel-'+t).classList.toggle('active', t===tab);
   });
   adminStatus('');
-  if (tab==='ignore') adminRenderIgnore();
-  if (tab==='stats')  adminRenderStats();
+  if (tab==='stats') adminRenderStats();
 }
+
+function openIgnore() {
+  document.getElementById('ignore-modal').style.display = 'flex';
+  adminRenderIgnore();
+}
+function closeIgnore() { document.getElementById('ignore-modal').style.display = 'none'; }
 
 function adminStatus(msg, type) {
   const el = document.getElementById('admin-status');
