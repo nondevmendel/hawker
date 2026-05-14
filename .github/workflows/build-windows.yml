@@ -1,0 +1,34 @@
+name: Build Windows exe
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install pyinstaller pillow mss pystray uiautomation
+
+      - name: Build Hawker.exe
+        working-directory: windows
+        run: pyinstaller --onefile --windowed --name Hawker --add-data "daemon_win.py;." tray_win.py
+
+      - name: Publish to rolling release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest-windows
+          name: Hawker for Windows (latest)
+          prerelease: true
+          files: windows/dist/Hawker.exe
