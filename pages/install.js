@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from './api/auth/[...nextauth]'
 
 const WIN_EXE_URL = 'https://github.com/nondevmendel/hawker/releases/download/latest-windows/Hawker.exe'
+const MAC_DMG_URL = 'https://github.com/nondevmendel/hawker/releases/download/latest-mac/HawkerInstall.dmg'
 
 export default function Install({ apiKey, apiUrl }) {
   const hawkerEnv = `HAWKER_API_URL=${apiUrl}\nHAWKER_API_KEY=${apiKey}`
@@ -55,31 +56,28 @@ function OsTabs({ apiKey, apiUrl, hawkerEnv }) {
 function MacSteps({ hawkerEnv }) {
   return (
     <>
-      <Step n="1" title="Requirements">
-        <p>macOS 12+, Python 3.9+, and the following Python packages:</p>
-        <Code>{`pip3 install rumps pillow pyobjc-framework-Cocoa pyobjc-framework-Quartz`}</Code>
-      </Step>
-
-      <Step n="2" title="Download the files">
-        <p>Download both files into a folder (e.g. <code style={codeStyle}>~/.hawker/</code>):</p>
-        <div style={{ display:'flex', gap:'10px', marginTop:'10px' }}>
-          <DlBtn href="/api/download/menubar.py" label="menubar.py" />
-          <DlBtn href="/api/download/daemon.py"  label="daemon.py"  />
+      <Step n="1" title="Download Hawker">
+        <p>Download the installer disk image — no Python required:</p>
+        <div style={{ marginTop:'10px' }}>
+          <DlBtn href={MAC_DMG_URL} label="HawkerInstall.dmg" primary />
         </div>
       </Step>
 
+      <Step n="2" title="Install">
+        <p>Open the <code style={codeStyle}>.dmg</code>, then drag <strong>Hawker.app</strong> into your <strong>Applications</strong> folder.</p>
+      </Step>
+
       <Step n="3" title="Configure your API key">
-        <p>Create a file called <code style={codeStyle}>hawker.env</code> in the same folder with this content:</p>
+        <p>On first launch Hawker will prompt for your API key. You can also pre-create <code style={codeStyle}>~/.hawker/hawker.env</code>:</p>
         <Code selectable>{hawkerEnv}</Code>
       </Step>
 
       <Step n="4" title="Grant Screen Recording permission">
-        <p>Open <strong>System Settings → Privacy &amp; Security → Screen Recording</strong> and enable the Python executable you&apos;ll use to run the app.</p>
+        <p>Open <strong>System Settings → Privacy &amp; Security → Screen Recording</strong> and enable Hawker when prompted.</p>
       </Step>
 
       <Step n="5" title="Run it">
-        <Code>{`python3 ~/.hawker/menubar.py`}</Code>
-        <p style={{ marginTop:'8px' }}>A <code style={codeStyle}>(o,o)</code> icon appears in your menu bar. Click it and choose <strong>Launch at Login</strong> to auto-start.</p>
+        <p>Launch Hawker from Applications. A <code style={codeStyle}>(o,o)</code> icon appears in your menu bar. Click it and choose <strong>Launch at Login</strong> to auto-start.</p>
       </Step>
     </>
   )

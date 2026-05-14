@@ -1,4 +1,4 @@
-name: Build Windows exe
+name: Build desktop apps
 
 on:
   push:
@@ -8,9 +8,8 @@ permissions:
   contents: write
 
 jobs:
-  build:
+  build-windows:
     runs-on: windows-latest
-
     steps:
       - uses: actions/checkout@v4
 
@@ -32,3 +31,23 @@ jobs:
           name: Hawker for Windows (latest)
           prerelease: true
           files: windows/dist/Hawker.exe
+
+  build-mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Build Hawker.dmg
+        run: bash mac/build.sh --dmg
+
+      - name: Publish to rolling release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest-mac
+          name: Hawker for macOS (latest)
+          prerelease: true
+          files: mac/HawkerInstall.dmg
