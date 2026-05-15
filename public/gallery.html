@@ -694,8 +694,8 @@ function renderStats(visits) {
     return `<div class="stat-block">
       <div class="stat-domain">${domain}</div>
       <div class="stat-grid">
-        <div class="stat-cell"><span class="val">${(v.total_visits/ad).toFixed(1)}x</span><span class="lbl">avg/day</span></div>
-        <div class="stat-cell"><span class="val">${((weekly[wk]||{}).visits)||0}x</span><span class="lbl">this week</span></div>
+        <div class="stat-cell"><span class="val">${(v.total_visits/ad).toFixed(1)}x</span><span class="lbl">avg visits/day</span></div>
+        <div class="stat-cell"><span class="val">${((weekly[wk]||{}).visits)||0}x</span><span class="lbl">avg visits/wk</span></div>
         <div class="stat-cell"><span class="val">${fmtTime(Math.round((v.total_time_seconds||0)/ad))||'—'}</span><span class="lbl">avg time/day</span></div>
         <div class="stat-cell"><span class="val">${fmtTime(Math.round((v.total_time_seconds||0)/aw))||'—'}</span><span class="lbl">avg time/wk</span></div>
       </div></div>`;
