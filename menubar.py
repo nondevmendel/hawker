@@ -153,13 +153,17 @@ def _remove_plist():
 
 
 def _acquire_singleton():
+    """Ensure only one daemon runs. PID-file based — does NOT touch the
+    LaunchAgent, because when launchd starts us, calling `launchctl unload`
+    on our own plist makes launchd think the service died and stop managing
+    us. The plist's `Label` is already a singleton lock at the OS level."""
     my_pid = os.getpid()
-    subprocess.run(["launchctl", "unload", str(_PLIST_PATH)], capture_output=True)
     if _PIDFILE.exists():
         try:
             old = int(_PIDFILE.read_text().strip())
             if old != my_pid:
-                os.kill(old, signal.SIGTERM)
+                try: os.kill(old, signal.SIGTERM)
+                except ProcessLookupError: pass
                 time.sleep(0.5)
         except Exception:
             pass
