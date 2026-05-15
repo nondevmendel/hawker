@@ -141,8 +141,13 @@ def _plist_exists() -> bool:
 
 def _write_plist():
     _PLIST_PATH.parent.mkdir(parents=True, exist_ok=True)
+    # Prefer /usr/bin/python3 (Apple's system wrapper) over sys.executable.
+    # The deep CommandLineTools binary that sys.executable resolves to has
+    # narrower TCC grants than the /usr/bin/python3 stub, which can fail
+    # under launchd when accessing protected folders (e.g., ~/Desktop).
+    python = "/usr/bin/python3" if os.path.exists("/usr/bin/python3") else sys.executable
     _PLIST_PATH.write_text(_PLIST_TEMPLATE.format(
-        label=_PLIST_LABEL, python=sys.executable,
+        label=_PLIST_LABEL, python=python,
         script=_SCRIPT, workdir=_HERE, home=_HOME,
     ))
 
@@ -299,6 +304,15 @@ class HawkerApp(rumps.App):
     def on_quit(self, _):
         _PIDFILE.unlink(missing_ok=True)
         self._stop_evt.set()
+        # Plist has KeepAlive=true, so rumps.quit_application alone leaves
+        # launchd respawning us within seconds. bootout removes the service
+        # from the current user session; the plist file on disk stays put,
+        # so next login (when launchd rescans ~/Library/LaunchAgents) starts
+        # us again. Detached so we don't block on it.
+        subprocess.Popen(
+            ["launchctl", "bootout", f"gui/{os.getuid()}/{_PLIST_LABEL}"],
+            start_new_session=True,
+        )
         rumps.quit_application()
 
 
