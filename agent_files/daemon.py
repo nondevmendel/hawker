@@ -406,10 +406,15 @@ def get_browser_window_id():
         BROWSERS = {"Google Chrome", "Safari", "Firefox", "Microsoft Edge", "Opera"}
         opts = (Quartz.kCGWindowListOptionOnScreenOnly |
                 Quartz.kCGWindowListExcludeDesktopElements)
+        # Front-to-back order. Chrome also keeps thin layer-0 strips on screen (toolbars,
+        # overlays ~47px tall) ahead of the real window — picking those produced blank
+        # 1.7KB shots (2026-10-05/06). Require a real page-sized window.
         for w in Quartz.CGWindowListCopyWindowInfo(opts, Quartz.kCGNullWindowID):
-            if (any(b in w.get("kCGWindowOwnerName", "") for b in BROWSERS)
+            b = w.get("kCGWindowBounds", {}) or {}
+            if (any(n in w.get("kCGWindowOwnerName", "") for n in BROWSERS)
                     and w.get("kCGWindowLayer", 999) == 0
-                    and w.get("kCGWindowAlpha", 0) > 0):
+                    and w.get("kCGWindowAlpha", 0) > 0
+                    and b.get("Width", 0) >= 400 and b.get("Height", 0) >= 300):
                 return w.get("kCGWindowNumber")
     except Exception:
         pass
@@ -499,6 +504,10 @@ def take_screenshot(url, domain):
         img = grab_browser_window()
         if img is None:
             log("No visible browser window to capture — shot skipped (never falls back to full screen)")
+            return None
+        # Never save a blank or sliver capture.
+        if img.height < 300 or img.width < 400 or max(img.convert("L").getextrema()) < 16:
+            log(f"Capture came out blank or tiny ({img.width}x{img.height}) — shot skipped")
             return None
         if img.width > MAX_WIDTH:
             ratio = MAX_WIDTH / img.width
