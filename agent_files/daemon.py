@@ -631,6 +631,52 @@ def git_push(msg=None):
         log(f"Git error: {e}")
 
 
+RUBIN_DB = Path.home() / "Library/Application Support/RickRubin/log.db"
+
+
+def rubin_state():
+    """Read the Rick Rubin tracker (read-only) so Hawker agrees with it.
+
+    Returns (sales_on, work_patterns):
+      sales_on      — the menu-bar "Sales call" toggle is running. Mendel (2026-10-06):
+                      no tracking and no pictures while he's actively doing sales.
+      work_patterns — Rick Rubin's ignored_domains: social pages that are work, not
+                      brain drain (e.g. facebook.com/groups/usedstage). Hawker skips them too.
+    """
+    try:
+        import sqlite3
+        con = sqlite3.connect(f"file:{RUBIN_DB}?mode=ro", uri=True, timeout=2)
+        try:
+            sales_on = con.execute(
+                "SELECT 1 FROM meta WHERE key='sales_call_active_since'").fetchone() is not None
+            patterns = [r[0].lower() for r in con.execute("SELECT domain FROM ignored_domains")]
+        finally:
+            con.close()
+        return sales_on, patterns
+    except Exception as e:
+        log(f"Rick Rubin state unreadable ({e}) — tracking as normal")
+        return False, []
+
+
+def is_work_url(url, patterns):
+    """Same rule as Rick Rubin's _is_ignored_social: a pattern with a "/" matches the
+    host+path prefix; a bare domain matches the host or any subdomain."""
+    try:
+        p = urlparse(url)
+        host = p.netloc.lower()
+        host = host[4:] if host.startswith("www.") else host
+        host_path = (host + p.path).lower()
+    except Exception:
+        return False
+    for pat in patterns:
+        if "/" in pat:
+            if host_path.startswith(pat):
+                return True
+        elif host == pat or host.endswith("." + pat):
+            return True
+    return False
+
+
 def main():
     log("=" * 60)
     log("screenlog daemon starting")
@@ -643,13 +689,28 @@ def main():
     next_shot_gap   = random.randint(MIN_SHOT_GAP, MAX_SHOT_GAP)
     last_domain     = None   # for visit counting — fires when domain changes
 
+    sales_was_on = False
     while True:
         ignored = load_ignored_urls()
+        sales_on, work_patterns = rubin_state()
+
+        # Actively doing sales (Rick Rubin "Sales call" toggle on): track nothing.
+        if sales_on:
+            if not sales_was_on:
+                log("Sales call running in Rick Rubin — tracking and screenshots paused")
+            sales_was_on = True
+            last_domain = None
+            time.sleep(POLL_INTERVAL)
+            continue
+        if sales_was_on:
+            log("Sales call ended — tracking resumed")
+            sales_was_on = False
+
         url     = get_active_browser_url()
 
         if url:
             on_social     = is_social_media(url)
-            ignored_match = is_ignored(url, ignored)
+            ignored_match = is_ignored(url, ignored) or is_work_url(url, work_patterns)
             sensitive     = title_looks_sensitive(url)
             domain        = extract_domain(url) if on_social else None
             now           = time.time()
