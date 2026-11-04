@@ -27,7 +27,7 @@ Web traffic to `/app` and `/api/data` is gated by `proxy.js` (Next.js 16 middlew
 ## Repository layout
 
 ```
-agent_files/        Canonical source for the desktop daemon (daemon.py, menubar.py, hawker.env.example)
+agent_files/        Canonical source for the desktop app (menubar.py = the one poll loop, daemon.py = screenshots/visits, tracker.py = time tracker, formerly the separate Rick Rubin app)
 mac/                macOS installer (install.command, uninstall.sh, build.sh, setup.py)
 windows/            Windows installer (install.bat, build.bat, setup.iss, daemon_win.py, tray_win.py)
 log_hawk/           Files staged for the macOS install — install.command copies from here into ~/.screenlog/
@@ -128,3 +128,18 @@ Both are provisioned via the Vercel Marketplace and surface as environment varia
 ## Related notes
 
 - `rubin/rubin.py` — Rick Rubin sales-call tracker. Lives in this repo for convenience but is not part of Hawker proper; it has its own menubar lifecycle.
+
+## Time tracker (merged from the Rick Rubin app, 2026-11-04)
+
+The Hawker menu bar app also runs the time tracker that used to be its own app
+(`com.mendelrosenberg.rickrubin`): optimization / corporate / brain-drain time,
+the Gearsupply and 2.lease sales timers, the 10-minute brain-drain alert to the
+"Me No Waste Time" group via Beeper, the midnight stats, and the live timer item.
+One 20s loop serves both: the front app comes from AppKit (no osascript), and a
+browser is asked for its URL only when it is in front. The brain-drain alert reuses
+Hawker's screenshot (address bar blurred). Nothing is tracked while a sales call runs
+or after 5 minutes without keyboard/mouse input.
+
+Data: `~/.screenlog/tracker.db` and `~/.screenlog/tracker.log` (copied from
+`~/Library/Application Support/RickRubin/log.db` and the old app's `tracker.log`,
+which are left in place as an archive).

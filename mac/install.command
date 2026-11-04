@@ -13,7 +13,7 @@ cd "$(dirname "$0")/.."
 INSTALL_DIR="$HOME/.screenlog"
 PLIST_LABEL="com.mendelrosenberg.screenlog"
 PLIST_PATH="$HOME/Library/LaunchAgents/$PLIST_LABEL.plist"
-SOURCE_DIR="$(pwd)/log_hawk"
+SOURCE_DIR="$(pwd)/agent_files"
 ENV_FILE="$INSTALL_DIR/hawker.env"
 
 bold()  { printf '\033[1m%s\033[0m\n' "$*"; }
@@ -67,6 +67,7 @@ mkdir -p "$INSTALL_DIR/docs/screenshots"
 
 cp "$SOURCE_DIR/daemon.py"  "$INSTALL_DIR/daemon.py"
 cp "$SOURCE_DIR/menubar.py" "$INSTALL_DIR/menubar.py"
+cp "$SOURCE_DIR/tracker.py" "$INSTALL_DIR/tracker.py"
 
 # Copy default config if one doesn't already exist
 if [ ! -f "$INSTALL_DIR/config.json" ]; then

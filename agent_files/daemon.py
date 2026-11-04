@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-screenlog daemon
-- Checks active browser URL every ~30s
+Hawker capture helpers (imported by menubar.py, which runs the only poll loop)
+- Reads the front browser's URL (only when a browser is in front)
 - Captures screenshot only when browsing social media
 - Tracks visits per domain (new visit each time you arrive at a social site)
 - Stores domain metadata per screenshot for tombstone support
@@ -299,33 +299,52 @@ def load_ignored_urls():
         return []
 
 
-def get_active_browser_url():
-    # Check all known browsers regardless of which app is frontmost.
-    # Uses "if application X is running" guard to avoid accidentally launching a browser.
-    browser_scripts = {
-        "Google Chrome": '''if application "Google Chrome" is running then
-    tell application "Google Chrome" to return URL of active tab of front window
-end if
-return ""''',
-        "Safari": '''if application "Safari" is running then
-    tell application "Safari" to return URL of current tab of front window
-end if
-return ""''',
-        "Microsoft Edge": '''if application "Microsoft Edge" is running then
-    tell application "Microsoft Edge" to return URL of active tab of front window
-end if
-return ""''',
-    }
-    for app, script in browser_scripts.items():
-        try:
-            result = subprocess.run(["osascript", "-e", script],
-                                    capture_output=True, text=True, timeout=5)
-            url = result.stdout.strip()
-            if url.startswith("http"):
-                return url
-        except Exception:
-            pass
-    return None
+# Browsers we know how to ask for the current tab URL. Only the one in front is
+# asked, and only if it is running, so a poll is at most one osascript call.
+_URL_SCRIPTS = {
+    "Google Chrome":  'tell application "Google Chrome" to return URL of active tab of front window',
+    "Safari":         'tell application "Safari" to return URL of current tab of front window',
+    "Microsoft Edge": 'tell application "Microsoft Edge" to return URL of active tab of front window',
+    "Brave Browser":  'tell application "Brave Browser" to return URL of active tab of front window',
+    "Arc":            'tell application "Arc" to return URL of active tab of front window',
+}
+
+
+def front_app():
+    """Name of the app in front. Reads AppKit directly: no osascript, no System
+    Events round trip (the old per-poll System Events call made the pointer
+    stutter and broke Wispr Flow pastes)."""
+    try:
+        import AppKit
+        app = AppKit.NSWorkspace.sharedWorkspace().frontmostApplication()
+        return str(app.localizedName()) if app else ""
+    except Exception:
+        return ""
+
+
+def idle_seconds():
+    """Seconds since the last keyboard or mouse input (no subprocess)."""
+    try:
+        import Quartz
+        return float(Quartz.CGEventSourceSecondsSinceLastEventType(
+            Quartz.kCGEventSourceStateHIDSystemState, Quartz.kCGAnyInputEventType))
+    except Exception:
+        return 0.0
+
+
+def get_browser_url(app):
+    """URL of the active tab of `app`, or None. Only call this when `app` is the
+    frontmost app (so it is running and no browser gets launched)."""
+    script = _URL_SCRIPTS.get(app)
+    if not script:
+        return None
+    try:
+        result = subprocess.run(["osascript", "-e", script],
+                                capture_output=True, text=True, timeout=5)
+        url = result.stdout.strip()
+        return url if url.startswith("http") else None
+    except Exception:
+        return None
 
 
 def is_social_media(url):
@@ -432,18 +451,50 @@ def grab_browser_window():
     wid = get_browser_window_id()
     if not wid:
         return None
+    # Plain ctypes with explicit releases. Going through PyObjC's Quartz
+    # wrappers leaked the full-resolution capture (~20 MB) on every shot:
+    # the menubar app reached 11.5 GB after 6 days (2026-11-01).
+    import ctypes
+    from ctypes import c_double, c_uint32, c_size_t, c_long, c_void_p, Structure
+
+    class CGRect(Structure):
+        _fields_ = [("x", c_double), ("y", c_double), ("w", c_double), ("h", c_double)]
+
     try:
-        import Quartz
-        cg_img = Quartz.CGWindowListCreateImage(
-            Quartz.CGRectNull, Quartz.kCGWindowListOptionIncludingWindow,
-            wid, Quartz.kCGWindowImageBoundsIgnoreFraming)
-        if not cg_img:
+        cg = ctypes.CDLL('/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics')
+        cf = ctypes.CDLL('/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation')
+        cg.CGWindowListCreateImage.restype  = c_void_p
+        cg.CGWindowListCreateImage.argtypes = [CGRect, c_uint32, c_uint32, c_uint32]
+        for fn in ("CGImageGetWidth", "CGImageGetHeight", "CGImageGetBytesPerRow"):
+            getattr(cg, fn).restype, getattr(cg, fn).argtypes = c_size_t, [c_void_p]
+        cg.CGImageGetDataProvider.restype   = c_void_p
+        cg.CGImageGetDataProvider.argtypes  = [c_void_p]
+        cg.CGDataProviderCopyData.restype   = c_void_p
+        cg.CGDataProviderCopyData.argtypes  = [c_void_p]
+        cf.CFDataGetLength.restype          = c_long
+        cf.CFDataGetLength.argtypes         = [c_void_p]
+        cf.CFDataGetBytePtr.restype         = c_void_p
+        cf.CFDataGetBytePtr.argtypes        = [c_void_p]
+        cf.CFRelease.argtypes               = [c_void_p]
+
+        inf = float("inf")
+        cg_null_rect = CGRect(inf, inf, 0.0, 0.0)
+        kIncludingWindow, kBoundsIgnoreFraming = 1 << 3, 1 << 0
+        img_ref = cg.CGWindowListCreateImage(cg_null_rect, kIncludingWindow, wid, kBoundsIgnoreFraming)
+        if not img_ref:
             log("Browser-window capture returned NULL (Screen Recording permission?)")
             return None
-        w, h = Quartz.CGImageGetWidth(cg_img), Quartz.CGImageGetHeight(cg_img)
-        bpr = Quartz.CGImageGetBytesPerRow(cg_img)
-        data = Quartz.CGDataProviderCopyData(Quartz.CGImageGetDataProvider(cg_img))
-        return Image.frombuffer("RGBA", (w, h), bytes(data), "raw", "BGRA", bpr, 1).convert("RGB")
+        data_ref = None
+        try:
+            w, h = cg.CGImageGetWidth(img_ref), cg.CGImageGetHeight(img_ref)
+            bpr = cg.CGImageGetBytesPerRow(img_ref)
+            data_ref = cg.CGDataProviderCopyData(cg.CGImageGetDataProvider(img_ref))
+            raw = ctypes.string_at(cf.CFDataGetBytePtr(data_ref), cf.CFDataGetLength(data_ref))
+        finally:
+            if data_ref:
+                cf.CFRelease(data_ref)
+            cf.CFRelease(img_ref)
+        return Image.frombuffer("RGBA", (w, h), raw, "raw", "BGRA", bpr, 1).convert("RGB")
     except Exception as e:
         log(f"grab_browser_window error: {e}")
         return None
@@ -638,127 +689,3 @@ def git_push(msg=None):
             log(f"Push failed: {result.stderr.strip()}")
     except subprocess.CalledProcessError as e:
         log(f"Git error: {e}")
-
-
-RUBIN_DB = Path.home() / "Library/Application Support/RickRubin/log.db"
-
-
-def rubin_state():
-    """Read the Rick Rubin tracker (read-only) so Hawker agrees with it.
-
-    Returns (sales_on, work_patterns):
-      sales_on      — the menu-bar "Sales call" toggle is running. Mendel (2026-10-06):
-                      no tracking and no pictures while he's actively doing sales.
-      work_patterns — Rick Rubin's ignored_domains: social pages that are work, not
-                      brain drain (e.g. facebook.com/groups/usedstage). Hawker skips them too.
-    """
-    try:
-        import sqlite3
-        con = sqlite3.connect(f"file:{RUBIN_DB}?mode=ro", uri=True, timeout=2)
-        try:
-            sales_on = con.execute(
-                "SELECT 1 FROM meta WHERE key='sales_call_active_since'").fetchone() is not None
-            patterns = [r[0].lower() for r in con.execute("SELECT domain FROM ignored_domains")]
-        finally:
-            con.close()
-        return sales_on, patterns
-    except Exception as e:
-        log(f"Rick Rubin state unreadable ({e}) — tracking as normal")
-        return False, []
-
-
-def is_work_url(url, patterns):
-    """Same rule as Rick Rubin's _is_ignored_social: a pattern with a "/" matches the
-    host+path prefix; a bare domain matches the host or any subdomain."""
-    try:
-        p = urlparse(url)
-        host = p.netloc.lower()
-        host = host[4:] if host.startswith("www.") else host
-        host_path = (host + p.path).lower()
-    except Exception:
-        return False
-    for pat in patterns:
-        if "/" in pat:
-            if host_path.startswith(pat):
-                return True
-        elif host == pat or host.endswith("." + pat):
-            return True
-    return False
-
-
-def main():
-    log("=" * 60)
-    log("screenlog daemon starting")
-    log(f"Poll every {POLL_INTERVAL}s | Screenshot gap {MIN_SHOT_GAP//60}-{MAX_SHOT_GAP//60}m")
-    log(f"Social media domains: {len(SOCIAL_DOMAINS)} | Max age: {MAX_AGE_HOURS}h")
-    log("=" * 60)
-    SHOTS_DIR.mkdir(parents=True, exist_ok=True)
-
-    last_shot_time  = 0.0
-    next_shot_gap   = random.randint(MIN_SHOT_GAP, MAX_SHOT_GAP)
-    last_domain     = None   # for visit counting — fires when domain changes
-
-    sales_was_on = False
-    while True:
-        ignored = load_ignored_urls()
-        sales_on, work_patterns = rubin_state()
-
-        # Actively doing sales (Rick Rubin "Sales call" toggle on): track nothing.
-        if sales_on:
-            if not sales_was_on:
-                log("Sales call running in Rick Rubin — tracking and screenshots paused")
-            sales_was_on = True
-            last_domain = None
-            time.sleep(POLL_INTERVAL)
-            continue
-        if sales_was_on:
-            log("Sales call ended — tracking resumed")
-            sales_was_on = False
-
-        url     = get_active_browser_url()
-
-        if url:
-            on_social     = is_social_media(url)
-            ignored_match = is_ignored(url, ignored) or is_work_url(url, work_patterns)
-            sensitive     = title_looks_sensitive(url)
-            domain        = extract_domain(url) if on_social else None
-            now           = time.time()
-
-            # Count a visit when arriving at a new social domain
-            if on_social and not ignored_match and not sensitive:
-                if domain != last_domain:
-                    record_visit(domain)
-                last_domain = domain
-            else:
-                last_domain = None
-
-            # Accumulate dwell time every poll cycle we're on the same domain
-            if on_social and not ignored_match and not sensitive and domain == last_domain:
-                add_domain_time(domain, POLL_INTERVAL)
-
-            if on_social and not ignored_match and not sensitive \
-                    and (now - last_shot_time) >= next_shot_gap:
-                log(f"On social media: {url[:80]}")
-                result = take_screenshot(url, domain)
-                if result:
-                    cleanup_old()
-                    jpg_path, stem = result
-                    _hawker_upload(stem, jpg_path, domain)
-                    last_shot_time = time.time()
-                    next_shot_gap  = random.randint(MIN_SHOT_GAP, MAX_SHOT_GAP)
-                    log(f"Next shot in {next_shot_gap // 60}m {next_shot_gap % 60}s")
-            elif ignored_match:
-                log(f"Ignored URL, skipping: {url[:60]}")
-            elif not on_social:
-                log(f"Not social media, skipping: {url[:60]}")
-            elif sensitive:
-                log(f"Sensitive URL, skipping: {url[:60]}")
-        else:
-            last_domain = None
-            log("No browser URL detected (browser may be closed)")
-
-        time.sleep(POLL_INTERVAL)
-
-
-if __name__ == "__main__":
-    main()
