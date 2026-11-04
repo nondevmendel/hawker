@@ -666,7 +666,7 @@ margin-bottom:14px;text-shadow:0 0 20px #22c55e;">💰&nbsp; YOU STACKED IT &nbs
 
     def on_dashboard(self, _):
         url = _load_hawker_env().get("HAWKER_API_URL", "").rstrip("/") or "https://hawker-flax.vercel.app"
-        subprocess.run(["open", url + "/app.html"])
+        subprocess.run(["open", url + "/gallery.html"])
 
     def on_logfile(self, _):
         subprocess.run(["open", str(_d.LOG_FILE)])
