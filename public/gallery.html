@@ -685,19 +685,23 @@ document.addEventListener('keydown', e => {
 
 function renderStats(visits) {
   const el = document.getElementById('stats-list');
-  const wk = weekKey();
   const rows = Object.entries(visits).sort((a,b) => (b[1].total_visits||0)-(a[1].total_visits||0));
   if (!rows.length) return;
+  // One shared set of days for every site: any day Hawker logged social browsing.
+  // (Dividing by the days a site itself was visited inflated the averages.)
+  const activeDays = new Set();
+  for (const [, v] of rows) for (const d of Object.keys(v.daily||{})) activeDays.add(d);
+  const nDays = Math.max(activeDays.size, 1);
   el.innerHTML = rows.map(([domain, v]) => {
-    const daily = v.daily||{}, weekly = v.weekly||{};
-    const ad = Math.max(Object.keys(daily).length,1), aw = Math.max(Object.keys(weekly).length,1);
+    const perDayVisits = (v.total_visits||0) / nDays;
+    const perDaySecs   = (v.total_time_seconds||0) / nDays;
     return `<div class="stat-block">
       <div class="stat-domain">${domain}</div>
       <div class="stat-grid">
-        <div class="stat-cell"><span class="val">${(v.total_visits/ad).toFixed(1)}x</span><span class="lbl">avg visits/day</span></div>
-        <div class="stat-cell"><span class="val">${((weekly[wk]||{}).visits)||0}x</span><span class="lbl">avg visits/wk</span></div>
-        <div class="stat-cell"><span class="val">${fmtTime(Math.round((v.total_time_seconds||0)/ad))||'—'}</span><span class="lbl">avg time/day</span></div>
-        <div class="stat-cell"><span class="val">${fmtTime(Math.round((v.total_time_seconds||0)/aw))||'—'}</span><span class="lbl">avg time/wk</span></div>
+        <div class="stat-cell"><span class="val">${perDayVisits.toFixed(1)}x</span><span class="lbl">avg visits/day</span></div>
+        <div class="stat-cell"><span class="val">${Math.round(perDayVisits*7)}x</span><span class="lbl">avg visits/wk</span></div>
+        <div class="stat-cell"><span class="val">${fmtTime(Math.round(perDaySecs))||'—'}</span><span class="lbl">avg time/day</span></div>
+        <div class="stat-cell"><span class="val">${fmtTime(Math.round(perDaySecs*7))||'—'}</span><span class="lbl">avg time/wk</span></div>
       </div></div>`;
   }).join('');
 }
