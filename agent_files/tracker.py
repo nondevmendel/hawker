@@ -10,6 +10,7 @@ No polling happens here. menubar.py runs the one loop and calls in.
 Data: ~/.screenlog/tracker.db   Log: ~/.screenlog/tracker.log
 """
 
+import json
 import re
 import sqlite3
 import subprocess
@@ -421,3 +422,66 @@ def send_daily_stats_if_due():
             log(f"daily stats sent for {yesterday}")
     except Exception as e:
         log(f"daily stats error: {e}")
+
+
+# ── Shabbat and Yom Tov: no computer use, so nothing is counted ─────────────
+# Windows run from candle lighting to havdalah (Los Angeles times, from
+# hebcal.com), cached in shabbat.json and refreshed when it runs short.
+
+SHABBAT_FILE = DATA_DIR / "shabbat.json"
+_HEBCAL_URL = ("https://www.hebcal.com/hebcal?v=1&cfg=json&maj=on&min=off&mod=off&nx=off"
+               "&ss=off&mf=off&c=on&geo=geoname&geonameid=5368361&M=on&s=off&start={start}&end={end}")
+_shabbat_windows = None
+_shabbat_fetching = False
+
+
+def _load_shabbat():
+    global _shabbat_windows
+    try:
+        data = json.loads(SHABBAT_FILE.read_text())
+        _shabbat_windows = [(a, b) for a, b in data.get("windows", [])]
+    except Exception:
+        _shabbat_windows = []
+
+
+def _refresh_shabbat():
+    """Fetch the next ~13 months of candle-lighting/havdalah times."""
+    global _shabbat_fetching
+    try:
+        import urllib.request, datetime as _dt
+        today = _dt.date.today()
+        url = _HEBCAL_URL.format(start=(today - _dt.timedelta(days=7)).isoformat(),
+                                 end=(today + _dt.timedelta(days=400)).isoformat())
+        with urllib.request.urlopen(url, timeout=20) as r:
+            items = json.loads(r.read()).get("items", [])
+        ev = sorted((i["date"][:16], i["category"]) for i in items
+                    if i.get("category") in ("candles", "havdalah"))
+        wins, start = [], None
+        for t, c in ev:
+            if c == "candles" and start is None:
+                start = t
+            elif c == "havdalah" and start is not None:
+                wins.append((start, t))
+                start = None
+        if wins:
+            SHABBAT_FILE.write_text(json.dumps({"fetched": today.isoformat(), "windows": wins}))
+            _load_shabbat()
+            log(f"Shabbat/Yom Tov times refreshed: {len(wins)} windows")
+    except Exception as e:
+        log(f"Shabbat times refresh failed: {e}")
+    finally:
+        _shabbat_fetching = False
+
+
+def is_shabbat(now=None):
+    """True between candle lighting and havdalah. Never blocks: if the cached
+    times run out within 30 days, a refresh starts in the background."""
+    global _shabbat_fetching
+    if _shabbat_windows is None:
+        _load_shabbat()
+    stamp = time.strftime("%Y-%m-%dT%H:%M", time.localtime(now or time.time()))
+    soon = time.strftime("%Y-%m-%dT%H:%M", time.localtime((now or time.time()) + 30 * 86400))
+    if (not _shabbat_windows or _shabbat_windows[-1][1] < soon) and not _shabbat_fetching:
+        _shabbat_fetching = True
+        threading.Thread(target=_refresh_shabbat, daemon=True).start()
+    return any(a <= stamp < b for a, b in _shabbat_windows or [])

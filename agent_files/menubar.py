@@ -269,6 +269,13 @@ class HawkerApp(rumps.App):
             self._stop_evt.wait(POLL_INTERVAL)
 
     def _poll(self):
+        # Shabbat / Yom Tov: no computer use, so count nothing at all.
+        if _t.is_shabbat():
+            self._social_start = 0.0
+            self._last_domain = None
+            self._flush_session()
+            return
+
         live = self._running_sales()
 
         # Sales call running: count it; Hawker tracks nothing during sales.

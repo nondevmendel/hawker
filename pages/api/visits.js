@@ -7,8 +7,15 @@ export default async function handler(req, res) {
   const ctx = await getAuthContext(req, res)
   if (!ctx) return res.status(401).json({ error: 'unauthorized' })
 
-  const { domain, entry } = req.body
+  const { domain, entry, replace } = req.body
   if (!domain || !entry) return res.status(400).json({ error: 'missing domain or entry' })
+
+  // replace: true writes the entry as sent. Used for corrections (e.g. removing
+  // Shabbat time), which the max-merge below would otherwise ignore.
+  if (replace === true) {
+    await saveVisitEntry(ctx.uid, domain, entry)
+    return res.json({ ok: true, replaced: true })
+  }
 
   // Merge with existing entry so concurrent calls don't clobber each other
   const existing = await loadVisits(ctx.uid)
